@@ -1,0 +1,571 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+
+interface Municipality {
+  id: number;
+  name: string;
+  prefecture: {
+    id: number;
+    name: string;
+  };
+}
+
+interface FestivalFormData {
+  startDate: string;
+  endDate: string;
+  municipalityId: number;
+  address: string;
+  content: string;
+  foodStalls: string;
+  sponsors: string;
+  schedules: Array<{
+    date: string;
+    startTime: string;
+    endTime: string;
+  }>;
+}
+
+const FestivalForm: React.FC = () => {
+  console.log('FestivalFormコンポーネントがレンダリングされました');
+  
+  try {
+    const navigate = useNavigate();
+    console.log('useNavigate取得成功');
+    
+    const { user } = useAuth();
+    console.log('useAuth取得成功、ユーザー:', user);
+    
+    const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string>('');
+    const [success, setSuccess] = useState<string>('');
+
+    const [formData, setFormData] = useState<FestivalFormData>({
+      startDate: '',
+      endDate: '',
+      municipalityId: 0,
+      address: '',
+      content: '',
+      foodStalls: '',
+      sponsors: '',
+      schedules: []
+    });
+
+    console.log('state初期化完了');
+
+    // 市区町村一覧を取得
+    useEffect(() => {
+      console.log('useEffect実行開始');
+      const fetchMunicipalities = async () => {
+        try {
+          console.log('市区町村データを取得中...');
+          const response = await fetch('http://localhost:3001/api/region/municipalities');
+          console.log('APIレスポンス:', response.status);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('取得した市区町村データ:', data);
+            setMunicipalities(data);
+          } else {
+            console.error('市区町村取得エラー:', response.status);
+            setError('市区町村の取得に失敗しました');
+          }
+        } catch (error) {
+          console.error('市区町村取得エラー:', error);
+          setError('市区町村の取得に失敗しました');
+        }
+      };
+
+      fetchMunicipalities();
+    }, []);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setLoading(true);
+      setError('');
+      setSuccess('');
+
+      // 日程のバリデーション
+      if (formData.schedules.length === 0) {
+        setError('少なくとも1つの日程を設定してください');
+        setLoading(false);
+        return;
+      }
+
+      // 各日程の必須項目チェック
+      for (let i = 0; i < formData.schedules.length; i++) {
+        const schedule = formData.schedules[i];
+        if (!schedule.date || !schedule.startTime || !schedule.endTime) {
+          setError(`日程 ${i + 1} の開催日、開始時間、終了時間は必須です`);
+          setLoading(false);
+          return;
+        }
+
+        // 時間の妥当性チェック
+        if (schedule.startTime >= schedule.endTime) {
+          setError(`日程 ${i + 1} の開始時間は終了時間より前である必要があります`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:3001/api/festivals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          setSuccess('お祭りの登録が完了しました！');
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+        } else {
+          const errorData = await response.json();
+          setError(errorData.error || 'お祭りの登録に失敗しました');
+        }
+      } catch (error) {
+        setError('お祭りの登録に失敗しました');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleCancel = () => {
+      navigate('/dashboard');
+    };
+
+    // 日程を追加
+    const addSchedule = () => {
+      setFormData(prev => ({
+        ...prev,
+        schedules: [...prev.schedules, {
+          date: '',
+          startTime: '',
+          endTime: ''
+        }]
+      }));
+    };
+
+    // 日程を削除
+    const removeSchedule = (index: number) => {
+      setFormData(prev => ({
+        ...prev,
+        schedules: prev.schedules.filter((_, i) => i !== index)
+      }));
+    };
+
+    // 日程の変更を処理
+    const handleScheduleChange = (index: number, field: 'date' | 'startTime' | 'endTime', value: string) => {
+      setFormData(prev => ({
+        ...prev,
+        schedules: prev.schedules.map((schedule, i) => 
+          i === index ? { ...schedule, [field]: value } : schedule
+        )
+      }));
+    };
+
+    console.log('レンダリング開始');
+
+    // シンプルなテスト表示
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        backgroundColor: '#f0f0f0', 
+        minHeight: '100vh'
+      }}>
+        <div style={{ 
+          backgroundColor: 'white', 
+          padding: '2rem', 
+          borderRadius: '8px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          maxWidth: '800px',
+          margin: '0 auto'
+        }}>
+          <h1 style={{ color: '#333', marginBottom: '1rem' }}>
+            お祭り登録ページ
+          </h1>
+          
+          {/* デバッグ情報 */}
+          <div style={{ 
+            backgroundColor: '#e8f4fd', 
+            padding: '1rem', 
+            marginBottom: '1rem', 
+            borderRadius: '4px',
+            border: '1px solid #bee5eb'
+          }}>
+            <p><strong>デバッグ情報:</strong></p>
+            <p>ユーザー: {user?.username || '未ログイン'}</p>
+            <p>市区町村数: {municipalities.length}</p>
+            <p>エラー: {error || 'なし'}</p>
+            <p>ローディング: {loading ? 'はい' : 'いいえ'}</p>
+            <p>現在のURL: {window.location.href}</p>
+            <p>コンポーネント: FestivalForm</p>
+            <p>レンダリング時刻: {new Date().toLocaleString('ja-JP')}</p>
+            <p>日程数: {formData.schedules.length}</p>
+            <p>日程詳細: {JSON.stringify(formData.schedules)}</p>
+          </div>
+
+          {error && (
+            <div style={{ 
+              backgroundColor: '#f8d7da', 
+              color: '#721c24', 
+              padding: '1rem', 
+              marginBottom: '1rem', 
+              borderRadius: '4px',
+              border: '1px solid #f5c6cb'
+            }}>
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div style={{ 
+              backgroundColor: '#d4edda', 
+              color: '#155724', 
+              padding: '1rem', 
+              marginBottom: '1rem', 
+              borderRadius: '4px',
+              border: '1px solid #c3e6cb'
+            }}>
+              {success}
+            </div>
+          )}
+
+                     <form onSubmit={handleSubmit}>
+             {/* 開催日程 */}
+             <div style={{ marginBottom: '2rem' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                 <label style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                   開催日程 <span style={{ color: 'red' }}>*</span>
+                 </label>
+                 <button
+                   type="button"
+                   onClick={addSchedule}
+                   style={{ 
+                     padding: '0.5rem 1rem', 
+                     border: '1px solid #007bff', 
+                     borderRadius: '4px', 
+                     backgroundColor: '#007bff',
+                     color: 'white',
+                     cursor: 'pointer',
+                     fontSize: '0.9rem'
+                   }}
+                 >
+                   + 日程を追加
+                 </button>
+               </div>
+
+               {formData.schedules.length === 0 ? (
+                 <div style={{ 
+                   padding: '1rem', 
+                   backgroundColor: '#f8f9fa', 
+                   borderRadius: '4px',
+                   border: '1px solid #dee2e6',
+                   textAlign: 'center',
+                   color: '#6c757d'
+                 }}>
+                   日程を追加してください
+                 </div>
+               ) : (
+                 formData.schedules.map((schedule, index) => (
+                   <div key={index} style={{ 
+                     marginBottom: '1rem', 
+                     padding: '1rem', 
+                     border: '1px solid #ddd', 
+                     borderRadius: '4px',
+                     backgroundColor: '#f8f9fa'
+                   }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                       <h4 style={{ margin: 0, color: '#333' }}>日程 {index + 1}</h4>
+                       {formData.schedules.length > 1 && (
+                         <button
+                           type="button"
+                           onClick={() => removeSchedule(index)}
+                           style={{ 
+                             padding: '0.25rem 0.5rem', 
+                             border: '1px solid #dc3545', 
+                             borderRadius: '4px', 
+                             backgroundColor: '#dc3545',
+                             color: 'white',
+                             cursor: 'pointer',
+                             fontSize: '0.8rem'
+                           }}
+                         >
+                           削除
+                         </button>
+                       )}
+                     </div>
+
+                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                       <div>
+                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                           開催日 <span style={{ color: 'red' }}>*</span>
+                         </label>
+                         <input
+                           type="date"
+                           value={schedule.date}
+                           onChange={(e) => handleScheduleChange(index, 'date', e.target.value)}
+                           required
+                           style={{ 
+                             width: '100%', 
+                             padding: '0.5rem', 
+                             border: '1px solid #ddd', 
+                             borderRadius: '4px' 
+                           }}
+                         />
+                       </div>
+
+                       <div>
+                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                           開始時間 <span style={{ color: 'red' }}>*</span>
+                         </label>
+                         <input
+                           type="time"
+                           value={schedule.startTime}
+                           onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
+                           required
+                           style={{ 
+                             width: '100%', 
+                             padding: '0.5rem', 
+                             border: '1px solid #ddd', 
+                             borderRadius: '4px' 
+                           }}
+                         />
+                       </div>
+
+                       <div>
+                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                           終了時間 <span style={{ color: 'red' }}>*</span>
+                         </label>
+                         <input
+                           type="time"
+                           value={schedule.endTime}
+                           onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
+                           required
+                           style={{ 
+                             width: '100%', 
+                             padding: '0.5rem', 
+                             border: '1px solid #ddd', 
+                             borderRadius: '4px' 
+                           }}
+                         />
+                       </div>
+                     </div>
+                   </div>
+                 ))
+               )}
+             </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                市区町村 <span style={{ color: 'red' }}>*</span>
+              </label>
+              <select
+                name="municipalityId"
+                value={formData.municipalityId}
+                onChange={handleInputChange}
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: '0.5rem', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px' 
+                }}
+              >
+                <option value="">市区町村を選択してください</option>
+                {municipalities.map((municipality) => (
+                  <option key={municipality.id} value={municipality.id}>
+                    {municipality.prefecture.name} - {municipality.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                詳細住所 <span style={{ color: 'red' }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                required
+                placeholder="例：千葉市中央区富士見1-1-1"
+                style={{ 
+                  width: '100%', 
+                  padding: '0.5rem', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px' 
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                お祭りの内容 <span style={{ color: 'red' }}>*</span>
+              </label>
+              <textarea
+                name="content"
+                value={formData.content}
+                onChange={handleInputChange}
+                required
+                placeholder="お祭りの詳細な内容を記載してください"
+                rows={4}
+                style={{ 
+                  width: '100%', 
+                  padding: '0.5rem', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                出店情報
+              </label>
+              <textarea
+                name="foodStalls"
+                value={formData.foodStalls}
+                onChange={handleInputChange}
+                placeholder="出店の種類や数などを記載してください"
+                rows={3}
+                style={{ 
+                  width: '100%', 
+                  padding: '0.5rem', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                協賛（スポンサー）情報
+              </label>
+              <textarea
+                name="sponsors"
+                value={formData.sponsors}
+                onChange={handleInputChange}
+                placeholder="協賛企業やスポンサー情報を記載してください"
+                rows={3}
+                style={{ 
+                  width: '100%', 
+                  padding: '0.5rem', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={loading}
+                style={{ 
+                  padding: '0.75rem 1.5rem', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px', 
+                  backgroundColor: '#f8f9fa',
+                  cursor: 'pointer'
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{ 
+                  padding: '0.75rem 1.5rem', 
+                  border: 'none', 
+                  borderRadius: '4px', 
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                {loading ? '登録中...' : '登録する'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  } catch (error) {
+    console.error('FestivalFormコンポーネントでエラーが発生しました:', error);
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        backgroundColor: '#f8d7da', 
+        color: '#721c24',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ 
+          backgroundColor: 'white', 
+          padding: '2rem', 
+          borderRadius: '8px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          textAlign: 'center',
+          maxWidth: '600px'
+        }}>
+          <h1 style={{ color: '#721c24', marginBottom: '1rem' }}>
+            エラーが発生しました
+          </h1>
+          <p style={{ color: '#721c24', marginBottom: '2rem' }}>
+            FestivalFormコンポーネントでエラーが発生しました。
+          </p>
+          <div style={{ 
+            backgroundColor: '#f8d7da', 
+            padding: '1rem', 
+            borderRadius: '4px',
+            border: '1px solid #f5c6cb',
+            marginBottom: '2rem',
+            textAlign: 'left'
+          }}>
+            <p><strong>エラー詳細:</strong></p>
+            <p>{error instanceof Error ? error.message : String(error)}</p>
+            <p>現在のURL: {window.location.href}</p>
+            <p>エラー時刻: {new Date().toLocaleString('ja-JP')}</p>
+          </div>
+          <button 
+            onClick={() => window.history.back()}
+            style={{ 
+              padding: '0.75rem 1.5rem', 
+              border: 'none', 
+              borderRadius: '4px', 
+              backgroundColor: '#721c24',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            戻る
+          </button>
+        </div>
+      </div>
+    );
+  }
+};
+
+export default FestivalForm;

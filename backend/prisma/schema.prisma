@@ -19,6 +19,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  festivals Festival[] // お祭りとの関連
+
   @@map("users")
 }
 
@@ -39,8 +41,37 @@ model Municipality {
   name         String     // 市区町村名（例：千葉市中央区）
   prefectureId Int
   prefecture   Prefecture @relation(fields: [prefectureId], references: [id])
+  festivals    Festival[] // お祭りとの関連
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   @@map("municipalities")
+}
+
+model Festival {
+  id              Int          @id @default(autoincrement())
+  startDate       DateTime     // 開催開始日時
+  endDate         DateTime     // 開催終了日時
+  municipalityId  Int          // 市区町村ID
+  municipality    Municipality @relation(fields: [municipalityId], references: [id])
+  address         String       // 詳細住所
+  content         String       // お祭りの内容
+  foodStalls      String?      // 出店情報（オプション）
+  sponsors        String?      // 協賛（スポンサー）情報（オプション）
+  organizerId     Int          // 主催団体ID（ユーザーID）
+  organizer       User         @relation(fields: [organizerId], references: [id])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("festivals")
+}
+
+model LoginAttempt {
+  id        Int      @id @default(autoincrement())
+  username  String   // ユーザー名
+  success   Boolean  // ログイン成功/失敗
+  ipAddress String?  // IPアドレス（オプション）
+  createdAt DateTime @default(now())
+
+  @@map("login_attempts")
 }

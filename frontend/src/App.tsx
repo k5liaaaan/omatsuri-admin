@@ -4,6 +4,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import LoginForm from './components/LoginForm';
 import Dashboard from './components/Dashboard';
 import RegionMasterContainer from './components/RegionMasterContainer';
+import FestivalForm from './components/FestivalForm';
+import TestFestival from './components/TestFestival';
+import SimpleFestivalForm from './components/SimpleFestivalForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -23,7 +26,7 @@ function App() {
                 <RegionMasterContainer />
               </ProtectedRoute>
             } />
-                     <Route path="/region/:prefectureId" element={
+            <Route path="/region/:prefectureId" element={
            <ProtectedRoute>
              <RegionMasterContainer />
            </ProtectedRoute>
@@ -36,6 +39,21 @@ function App() {
          <Route path="/region/:prefectureId/municipalities/:municipalityId/edit" element={
            <ProtectedRoute>
              <RegionMasterContainer />
+           </ProtectedRoute>
+         } />
+         <Route path="/festival/new" element={
+           <ProtectedRoute>
+             <FestivalForm />
+           </ProtectedRoute>
+         } />
+         <Route path="/festival/test" element={
+           <ProtectedRoute>
+             <TestFestival />
+           </ProtectedRoute>
+         } />
+         <Route path="/festival/simple" element={
+           <ProtectedRoute>
+             <SimpleFestivalForm />
            </ProtectedRoute>
          } />
             <Route path="*" element={<Navigate to="/" replace />} />

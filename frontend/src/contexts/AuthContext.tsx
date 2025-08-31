@@ -26,12 +26,45 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // 初期ローディング状態をtrueに
   const [error, setError] = useState<string | null>(null);
 
   // Axiosのデフォルト設定
   axios.defaults.baseURL = API_URL;
   axios.defaults.headers.common['Authorization'] = token ? `Bearer ${token}` : '';
+
+  // セッション復元機能
+  useEffect(() => {
+    const restoreSession = async () => {
+      console.log('AuthContext - セッション復元開始');
+      const savedToken = localStorage.getItem('token');
+      console.log('AuthContext - 保存されたトークン:', savedToken ? 'あり' : 'なし');
+      
+      if (savedToken) {
+        try {
+          // トークンをヘッダーに設定
+          axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+          
+          // ユーザー情報を取得
+          const response = await axios.get('/api/auth/profile');
+          console.log('AuthContext - ユーザー情報取得成功:', response.data.user);
+          setUser(response.data.user);
+          setToken(savedToken);
+        } catch (error) {
+          console.log('AuthContext - セッション復元に失敗しました:', error);
+          // トークンが無効な場合は削除
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+        }
+      } else {
+        console.log('AuthContext - 保存されたトークンがありません');
+      }
+      console.log('AuthContext - セッション復元完了、isLoadingをfalseに設定');
+      setIsLoading(false);
+    };
+
+    restoreSession();
+  }, []);
 
   // トークンが変更されたときにヘッダーを更新
   useEffect(() => {
@@ -97,10 +130,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    setError(null);
+  const logout = async () => {
+    try {
+      // サーバーにログアウトリクエストを送信
+      if (token) {
+        await axios.post('/api/auth/logout');
+      }
+    } catch (error) {
+      console.log('ログアウトリクエストエラー:', error);
+      // エラーが発生してもローカルログアウトは実行
+    } finally {
+      setUser(null);
+      setToken(null);
+      setError(null);
+    }
   };
 
   const value: AuthContextType = {

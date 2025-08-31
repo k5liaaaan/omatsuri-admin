@@ -14,7 +14,14 @@ const auth = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error: '無効なトークンです' });
+    console.error('認証エラー:', error.message);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'トークンの有効期限が切れています' });
+    } else if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: '無効なトークンです' });
+    } else {
+      return res.status(401).json({ error: '認証に失敗しました' });
+    }
   }
 };
 

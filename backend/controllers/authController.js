@@ -2,6 +2,11 @@ const { PrismaClient } = require('@prisma/client');
 const { body, validationResult } = require('express-validator');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { generateToken } = require('../utils/jwt');
+const { 
+  recordLoginAttempt, 
+  checkLoginAttempts, 
+  resetLoginAttempts 
+} = require('../utils/loginAttempts');
 
 const prisma = new PrismaClient();
 
@@ -104,6 +109,14 @@ const login = async (req, res) => {
 
     const { username, password } = req.body;
 
+    // ログイン試行回数をチェック
+    const attemptCheck = await checkLoginAttempts(username);
+    if (attemptCheck.isLocked) {
+      return res.status(429).json({ 
+        error: attemptCheck.message || 'ログイン試行回数が上限に達しました。しばらく時間をおいてから再試行してください。'
+      });
+    }
+
     // ユーザーの検索
     const user = await prisma.user.findFirst({
       where: {
@@ -115,14 +128,21 @@ const login = async (req, res) => {
     });
 
     if (!user) {
+      // 失敗したログイン試行を記録
+      await recordLoginAttempt(username, false);
       return res.status(401).json({ error: 'ユーザー名またはパスワードが正しくありません' });
     }
 
     // パスワードの検証
     const isValidPassword = await comparePassword(password, user.password);
     if (!isValidPassword) {
+      // 失敗したログイン試行を記録
+      await recordLoginAttempt(username, false);
       return res.status(401).json({ error: 'ユーザー名またはパスワードが正しくありません' });
     }
+
+    // 成功したログイン試行を記録（失敗試行をクリア）
+    await recordLoginAttempt(username, true);
 
     // JWTトークンの生成
     const token = generateToken({ 
@@ -175,10 +195,30 @@ const getProfile = async (req, res) => {
   }
 };
 
+// ログアウト
+const logout = async (req, res) => {
+  try {
+    const username = req.user.username;
+    
+    // ログイン試行回数をリセット
+    await resetLoginAttempts(username);
+    
+    res.json({ 
+      message: 'ログアウトしました',
+      note: 'ログイン試行回数がリセットされました'
+    });
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'サーバーエラーが発生しました' });
+  }
+};
+
 module.exports = {
   register,
   login,
   getProfile,
+  logout,
   registerValidation,
   loginValidation
 };

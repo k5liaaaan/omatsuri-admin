@@ -45,6 +45,10 @@ app.use('/api/auth', authRoutes);
 const regionRoutes = require('../routes/region');
 app.use('/api/region', regionRoutes);
 
+// Festival routes
+const festivalRoutes = require('../routes/festival');
+app.use('/api/festivals', festivalRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
