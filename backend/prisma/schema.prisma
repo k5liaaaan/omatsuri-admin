@@ -15,8 +15,32 @@ model User {
   username  String   @unique
   email     String   @unique
   password  String
+  isAdmin   Boolean  @default(false) // 管理者フラグ
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model Prefecture {
+  id          Int           @id @default(autoincrement())
+  code        String        @unique // 都道府県コード（例：12）
+  name        String        @unique // 都道府県名（例：千葉県）
+  municipalities Municipality[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("prefectures")
+}
+
+model Municipality {
+  id           Int        @id @default(autoincrement())
+  code         String     @unique // 市区町村コード（例：12101）
+  name         String     // 市区町村名（例：千葉市中央区）
+  prefectureId Int
+  prefecture   Prefecture @relation(fields: [prefectureId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("municipalities")
 }

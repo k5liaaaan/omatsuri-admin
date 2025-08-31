@@ -41,6 +41,10 @@ app.get('/api/test', (req, res) => {
 const authRoutes = require('../routes/auth');
 app.use('/api/auth', authRoutes);
 
+// Region routes
+const regionRoutes = require('../routes/region');
+app.use('/api/region', regionRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -60,4 +64,9 @@ app.listen(PORT, () => {
   console.log(`  - POST http://localhost:${PORT}/api/auth/register`);
   console.log(`  - POST http://localhost:${PORT}/api/auth/login`);
   console.log(`  - GET  http://localhost:${PORT}/api/auth/profile`);
+  console.log(`Region endpoints:`);
+  console.log(`  - GET  http://localhost:${PORT}/api/region/prefectures`);
+  console.log(`  - GET  http://localhost:${PORT}/api/region/prefectures/:id`);
+  console.log(`  - GET  http://localhost:${PORT}/api/region/municipalities`);
+  console.log(`  - GET  http://localhost:${PORT}/api/region/prefectures/:prefectureId/municipalities`);
 });

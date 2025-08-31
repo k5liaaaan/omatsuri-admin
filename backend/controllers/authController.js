@@ -70,6 +70,7 @@ const register = async (req, res) => {
         id: true,
         username: true,
         email: true,
+        isAdmin: true,
         createdAt: true
       }
     });
@@ -135,6 +136,7 @@ const login = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        isAdmin: user.isAdmin,
         createdAt: user.createdAt
       },
       token
@@ -155,6 +157,7 @@ const getProfile = async (req, res) => {
         id: true,
         username: true,
         email: true,
+        isAdmin: true,
         createdAt: true,
         updatedAt: true
       }
