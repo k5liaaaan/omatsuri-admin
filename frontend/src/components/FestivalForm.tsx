@@ -2,18 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+interface Prefecture {
+  id: number;
+  name: string;
+}
+
 interface Municipality {
   id: number;
   name: string;
-  prefecture: {
-    id: number;
-    name: string;
-  };
+  prefectureId: number;
 }
 
 interface FestivalFormData {
-  startDate: string;
-  endDate: string;
   municipalityId: number;
   address: string;
   content: string;
@@ -36,54 +36,124 @@ const FestivalForm: React.FC = () => {
     const { user } = useAuth();
     console.log('useAuth取得成功、ユーザー:', user);
     
-    const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+         const [prefectures, setPrefectures] = useState<Prefecture[]>([]);
+     const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+     const [selectedPrefectureId, setSelectedPrefectureId] = useState<number>(0);
+     console.log('prefectures初期値:', prefectures);
+     console.log('municipalities初期値:', municipalities);
+     console.log('selectedPrefectureId初期値:', selectedPrefectureId);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
     const [success, setSuccess] = useState<string>('');
 
-    const [formData, setFormData] = useState<FestivalFormData>({
-      startDate: '',
-      endDate: '',
-      municipalityId: 0,
-      address: '',
-      content: '',
-      foodStalls: '',
-      sponsors: '',
-      schedules: []
-    });
+         const [formData, setFormData] = useState<FestivalFormData>({
+       municipalityId: 0,
+       address: '',
+       content: '',
+       foodStalls: '',
+       sponsors: '',
+       schedules: [{
+         date: '',
+         startTime: '',
+         endTime: ''
+       }]
+     });
 
     console.log('state初期化完了');
 
-    // 市区町村一覧を取得
+        // 都道府県一覧を取得
     useEffect(() => {
-      console.log('useEffect実行開始');
-      const fetchMunicipalities = async () => {
+      console.log('都道府県取得useEffect実行開始');
+      const fetchPrefectures = async () => {
         try {
-          console.log('市区町村データを取得中...');
-          const response = await fetch('http://localhost:3001/api/region/municipalities');
-          console.log('APIレスポンス:', response.status);
+          console.log('都道府県データを取得中...');
+          const response = await fetch('http://localhost:3001/api/region/prefectures');
+          console.log('都道府県APIレスポンス:', response.status);
           if (response.ok) {
             const data = await response.json();
-            console.log('取得した市区町村データ:', data);
-            setMunicipalities(data);
+            console.log('取得した都道府県データ:', data);
+            
+            if (Array.isArray(data)) {
+              setPrefectures(data);
+            } else if (data && Array.isArray(data.prefectures)) {
+              setPrefectures(data.prefectures);
+            } else if (data && Array.isArray(data.data)) {
+              setPrefectures(data.data);
+            } else {
+              console.error('予期しない都道府県データ形式:', data);
+              setPrefectures([]);
+              setError('都道府県データの形式が正しくありません');
+            }
           } else {
-            console.error('市区町村取得エラー:', response.status);
-            setError('市区町村の取得に失敗しました');
+            console.error('都道府県取得エラー:', response.status);
+            setPrefectures([]);
+            setError('都道府県の取得に失敗しました');
           }
         } catch (error) {
-          console.error('市区町村取得エラー:', error);
-          setError('市区町村の取得に失敗しました');
+          console.error('都道府県取得エラー:', error);
+          setPrefectures([]);
+          setError('都道府県の取得に失敗しました');
         }
       };
-
-      fetchMunicipalities();
+      fetchPrefectures();
     }, []);
+
+    // 選択された都道府県の市区町村一覧を取得
+    useEffect(() => {
+      if (selectedPrefectureId > 0) {
+        console.log('市区町村取得useEffect実行開始、都道府県ID:', selectedPrefectureId);
+        const fetchMunicipalities = async () => {
+          try {
+            console.log('市区町村データを取得中...');
+            const response = await fetch(`http://localhost:3001/api/region/prefectures/${selectedPrefectureId}/municipalities`);
+            console.log('市区町村APIレスポンス:', response.status);
+            if (response.ok) {
+              const data = await response.json();
+              console.log('取得した市区町村データ:', data);
+              
+              if (Array.isArray(data)) {
+                setMunicipalities(data);
+              } else if (data && Array.isArray(data.municipalities)) {
+                setMunicipalities(data.municipalities);
+              } else if (data && Array.isArray(data.data)) {
+                setMunicipalities(data.data);
+              } else {
+                console.error('予期しない市区町村データ形式:', data);
+                setMunicipalities([]);
+                setError('市区町村データの形式が正しくありません');
+              }
+            } else {
+              console.error('市区町村取得エラー:', response.status);
+              setMunicipalities([]);
+              setError('市区町村の取得に失敗しました');
+            }
+          } catch (error) {
+            console.error('市区町村取得エラー:', error);
+            setMunicipalities([]);
+            setError('市区町村の取得に失敗しました');
+          }
+        };
+        fetchMunicipalities();
+      } else {
+        setMunicipalities([]);
+      }
+    }, [selectedPrefectureId]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
       setFormData(prev => ({
         ...prev,
         [name]: value
+      }));
+    };
+
+    // 都道府県選択時の処理
+    const handlePrefectureChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const prefectureId = parseInt(e.target.value);
+      setSelectedPrefectureId(prefectureId);
+      setFormData(prev => ({
+        ...prev,
+        municipalityId: 0 // 市区町村をリセット
       }));
     };
 
@@ -119,6 +189,9 @@ const FestivalForm: React.FC = () => {
 
       try {
         const token = localStorage.getItem('token');
+        console.log('送信するトークン:', token);
+        console.log('送信するデータ:', formData);
+        
         const response = await fetch('http://localhost:3001/api/festivals', {
           method: 'POST',
           headers: {
@@ -209,7 +282,9 @@ const FestivalForm: React.FC = () => {
           }}>
             <p><strong>デバッグ情報:</strong></p>
             <p>ユーザー: {user?.username || '未ログイン'}</p>
-            <p>市区町村数: {municipalities.length}</p>
+            <p>都道府県数: {Array.isArray(prefectures) ? prefectures.length : '配列ではありません'}</p>
+            <p>選択された都道府県ID: {selectedPrefectureId}</p>
+            <p>市区町村数: {Array.isArray(municipalities) ? municipalities.length : '配列ではありません'}</p>
             <p>エラー: {error || 'なし'}</p>
             <p>ローディング: {loading ? 'はい' : 'いいえ'}</p>
             <p>現在のURL: {window.location.href}</p>
@@ -370,30 +445,61 @@ const FestivalForm: React.FC = () => {
                )}
              </div>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                市区町村 <span style={{ color: 'red' }}>*</span>
-              </label>
-              <select
-                name="municipalityId"
-                value={formData.municipalityId}
-                onChange={handleInputChange}
-                required
-                style={{ 
-                  width: '100%', 
-                  padding: '0.5rem', 
-                  border: '1px solid #ddd', 
-                  borderRadius: '4px' 
-                }}
-              >
-                <option value="">市区町村を選択してください</option>
-                {municipalities.map((municipality) => (
-                  <option key={municipality.id} value={municipality.id}>
-                    {municipality.prefecture.name} - {municipality.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                         {/* 都道府県選択 */}
+             <div style={{ marginBottom: '1rem' }}>
+               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                 都道府県 <span style={{ color: 'red' }}>*</span>
+               </label>
+               <select
+                 name="prefectureId"
+                 value={selectedPrefectureId}
+                 onChange={handlePrefectureChange}
+                 required
+                 style={{ 
+                   width: '100%', 
+                   padding: '0.5rem', 
+                   border: '1px solid #ddd', 
+                   borderRadius: '4px' 
+                 }}
+               >
+                 <option value="">都道府県を選択してください</option>
+                 {Array.isArray(prefectures) && prefectures.map((prefecture) => (
+                   <option key={prefecture.id} value={prefecture.id}>
+                     {prefecture.name}
+                   </option>
+                 ))}
+               </select>
+             </div>
+
+             {/* 市区町村選択 */}
+             <div style={{ marginBottom: '1rem' }}>
+               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                 市区町村 <span style={{ color: 'red' }}>*</span>
+               </label>
+               <select
+                 name="municipalityId"
+                 value={formData.municipalityId}
+                 onChange={handleInputChange}
+                 required
+                 disabled={selectedPrefectureId === 0}
+                 style={{ 
+                   width: '100%', 
+                   padding: '0.5rem', 
+                   border: '1px solid #ddd', 
+                   borderRadius: '4px',
+                   backgroundColor: selectedPrefectureId === 0 ? '#f8f9fa' : 'white'
+                 }}
+               >
+                 <option value="">
+                   {selectedPrefectureId === 0 ? '都道府県を先に選択してください' : '市区町村を選択してください'}
+                 </option>
+                 {Array.isArray(municipalities) && municipalities.map((municipality) => (
+                   <option key={municipality.id} value={municipality.id}>
+                     {municipality.name}
+                   </option>
+                 ))}
+               </select>
+             </div>
 
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
