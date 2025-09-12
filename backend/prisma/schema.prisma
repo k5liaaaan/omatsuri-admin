@@ -50,6 +50,7 @@ model Municipality {
 
 model Festival {
   id              Int          @id @default(autoincrement())
+  name            String       // お祭り名
   municipalityId  Int          // 市区町村ID
   municipality    Municipality @relation(fields: [municipalityId], references: [id])
   address         String       // 詳細住所

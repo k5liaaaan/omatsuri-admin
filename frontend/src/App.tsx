@@ -1,10 +1,10 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import LoginForm from './components/LoginForm';
 import Dashboard from './components/Dashboard';
 import RegionMasterContainer from './components/RegionMasterContainer';
 import FestivalForm from './components/FestivalForm';
+import FestivalList from './components/FestivalList';
+import FestivalDetail from './components/FestivalDetail';
 import TestFestival from './components/TestFestival';
 import SimpleFestivalForm from './components/SimpleFestivalForm';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -54,6 +54,16 @@ function App() {
          <Route path="/festival/simple" element={
            <ProtectedRoute>
              <SimpleFestivalForm />
+           </ProtectedRoute>
+         } />
+         <Route path="/festivals" element={
+           <ProtectedRoute>
+             <FestivalList />
+           </ProtectedRoute>
+         } />
+         <Route path="/festivals/:id" element={
+           <ProtectedRoute>
+             <FestivalDetail />
            </ProtectedRoute>
          } />
             <Route path="*" element={<Navigate to="/" replace />} />

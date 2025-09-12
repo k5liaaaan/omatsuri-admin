@@ -29,6 +29,11 @@ const Dashboard: React.FC = () => {
     navigate('/festival/simple');
   };
 
+  const handleFestivalListClick = () => {
+    console.log('お祭り一覧ボタンがクリックされました');
+    navigate('/festivals');
+  };
+
   return (
     <div className="dashboard">
       {/* ヘッダー */}
@@ -171,7 +176,7 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="feature-card" style={{ cursor: 'pointer' }}>
+                              <div className="feature-card" onClick={handleFestivalListClick} style={{ cursor: 'pointer' }}>
                   <div className="feature-icon">
                     <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />

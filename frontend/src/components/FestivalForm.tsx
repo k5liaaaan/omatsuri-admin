@@ -14,6 +14,7 @@ interface Municipality {
 }
 
 interface FestivalFormData {
+  name: string;
   municipalityId: number;
   address: string;
   content: string;
@@ -45,8 +46,11 @@ const FestivalForm: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
     const [success, setSuccess] = useState<string>('');
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const errorRef = React.useRef<HTMLDivElement>(null);
 
          const [formData, setFormData] = useState<FestivalFormData>({
+       name: '',
        municipalityId: 0,
        address: '',
        content: '',
@@ -139,6 +143,16 @@ const FestivalForm: React.FC = () => {
       }
     }, [selectedPrefectureId]);
 
+    // エラー発生時に自動的にエラーメッセージまでスクロール
+    useEffect(() => {
+      if (error && errorRef.current) {
+        errorRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }
+    }, [error]);
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
       setFormData(prev => ({
@@ -157,11 +171,42 @@ const FestivalForm: React.FC = () => {
       }));
     };
 
+    // モーダルを閉じてお祭り一覧ページに遷移
+    const handleModalClose = () => {
+      setShowSuccessModal(false);
+      navigate('/festivals');
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setLoading(true);
       setError('');
       setSuccess('');
+
+      // 基本項目のバリデーション
+      if (!formData.name.trim()) {
+        setError('お祭り名は必須です');
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.municipalityId) {
+        setError('市区町村を選択してください');
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.address.trim()) {
+        setError('詳細住所は必須です');
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.content.trim()) {
+        setError('お祭りの内容は必須です');
+        setLoading(false);
+        return;
+      }
 
       // 日程のバリデーション
       if (formData.schedules.length === 0) {
@@ -202,10 +247,8 @@ const FestivalForm: React.FC = () => {
         });
 
         if (response.ok) {
+          setShowSuccessModal(true);
           setSuccess('お祭りの登録が完了しました！');
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
         } else {
           const errorData = await response.json();
           setError(errorData.error || 'お祭りの登録に失敗しました');
@@ -294,18 +337,6 @@ const FestivalForm: React.FC = () => {
             <p>日程詳細: {JSON.stringify(formData.schedules)}</p>
           </div>
 
-          {error && (
-            <div style={{ 
-              backgroundColor: '#f8d7da', 
-              color: '#721c24', 
-              padding: '1rem', 
-              marginBottom: '1rem', 
-              borderRadius: '4px',
-              border: '1px solid #f5c6cb'
-            }}>
-              {error}
-            </div>
-          )}
 
           {success && (
             <div style={{ 
@@ -523,6 +554,26 @@ const FestivalForm: React.FC = () => {
 
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                お祭り名 <span style={{ color: 'red' }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                placeholder="例：千葉まつり"
+                style={{ 
+                  width: '100%', 
+                  padding: '0.5rem', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px' 
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
                 お祭りの内容 <span style={{ color: 'red' }}>*</span>
               </label>
               <textarea
@@ -612,8 +663,91 @@ const FestivalForm: React.FC = () => {
                 {loading ? '登録中...' : '登録する'}
               </button>
             </div>
+
+            {/* エラーメッセージ表示 */}
+            {error && (
+              <div 
+                ref={errorRef}
+                style={{ 
+                  backgroundColor: '#f8d7da', 
+                  color: '#721c24', 
+                  padding: '1rem', 
+                  marginTop: '1rem', 
+                  borderRadius: '4px',
+                  border: '1px solid #f5c6cb',
+                  textAlign: 'center'
+                }}
+              >
+                <strong>⚠️ エラー</strong><br />
+                {error}
+              </div>
+            )}
           </form>
         </div>
+
+        {/* 成功モーダル */}
+        {showSuccessModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '2rem',
+              borderRadius: '8px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+              maxWidth: '400px',
+              width: '90%',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                fontSize: '3rem',
+                color: '#28a745',
+                marginBottom: '1rem'
+              }}>
+                ✅
+              </div>
+              <h2 style={{
+                color: '#333',
+                marginBottom: '1rem',
+                fontSize: '1.5rem'
+              }}>
+                登録完了！
+              </h2>
+              <p style={{
+                color: '#666',
+                marginBottom: '2rem',
+                lineHeight: '1.5'
+              }}>
+                お祭りの登録が正常に完了しました。<br />
+                お祭り一覧ページに移動します。
+              </p>
+              <button
+                onClick={handleModalClose}
+                style={{
+                  padding: '0.75rem 2rem',
+                  border: 'none',
+                  borderRadius: '4px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                お祭り一覧を見る
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   } catch (error) {

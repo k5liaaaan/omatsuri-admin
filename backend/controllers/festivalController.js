@@ -44,6 +44,7 @@ const createFestival = async (req, res) => {
     console.log('ユーザーID:', req.user?.id);
     
     const {
+      name,
       municipalityId,
       address,
       content,
@@ -61,7 +62,7 @@ const createFestival = async (req, res) => {
     }
 
     // バリデーション
-    if (!municipalityId || !address || !content || !schedules || schedules.length === 0) {
+    if (!name || !municipalityId || !address || !content || !schedules || schedules.length === 0) {
       return res.status(400).json({ error: '必須項目が不足しています' });
     }
 
@@ -96,6 +97,7 @@ const createFestival = async (req, res) => {
       // お祭り基本情報を作成
       const newFestival = await tx.festival.create({
         data: {
+          name,
           municipalityId: parseInt(municipalityId),
           address,
           content,
@@ -181,8 +183,47 @@ const getUserFestivals = async (req, res) => {
   }
 };
 
+// お祭り詳細取得
+const getFestivalById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const festival = await prisma.festival.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        municipality: {
+          include: {
+            prefecture: true
+          }
+        },
+        organizer: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        schedules: {
+          orderBy: {
+            date: 'asc'
+          }
+        }
+      }
+    });
+
+    if (!festival) {
+      return res.status(404).json({ error: 'お祭りが見つかりません' });
+    }
+
+    res.json(festival);
+  } catch (error) {
+    console.error('お祭り詳細取得エラー:', error);
+    res.status(500).json({ error: 'お祭り詳細の取得に失敗しました' });
+  }
+};
+
 module.exports = {
   getFestivals,
   createFestival,
-  getUserFestivals
+  getUserFestivals,
+  getFestivalById
 };
