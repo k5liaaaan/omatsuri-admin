@@ -27,7 +27,17 @@ interface FestivalFormData {
   }>;
 }
 
-const FestivalForm: React.FC = () => {
+interface FestivalFormProps {
+  festivalId?: number; // 編集モードの場合のお祭りID
+  initialData?: FestivalFormData; // 編集モードの場合の初期データ
+  isEditMode?: boolean; // 編集モードかどうか
+}
+
+const FestivalForm: React.FC<FestivalFormProps> = ({ 
+  festivalId, 
+  initialData, 
+  isEditMode = false 
+}) => {
   console.log('FestivalFormコンポーネントがレンダリングされました');
   
   try {
@@ -49,21 +59,62 @@ const FestivalForm: React.FC = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const errorRef = React.useRef<HTMLDivElement>(null);
 
-         const [formData, setFormData] = useState<FestivalFormData>({
-       name: '',
-       municipalityId: 0,
-       address: '',
-       content: '',
-       foodStalls: '',
-       sponsors: '',
-       schedules: [{
-         date: '',
-         startTime: '',
-         endTime: ''
-       }]
-     });
+         const [formData, setFormData] = useState<FestivalFormData>(
+       initialData || {
+         name: '',
+         municipalityId: 0,
+         address: '',
+         content: '',
+         foodStalls: '',
+         sponsors: '',
+         schedules: [{
+           date: '',
+           startTime: '',
+           endTime: ''
+         }]
+       }
+     );
 
     console.log('state初期化完了');
+
+    // 編集モードの場合の初期データ設定
+    useEffect(() => {
+      if (isEditMode && initialData) {
+        console.log('編集モード: 初期データを設定', initialData);
+        setFormData(initialData);
+        
+        // 市区町村から都道府県を特定
+        if (initialData.municipalityId) {
+          fetchMunicipalityPrefecture(initialData.municipalityId);
+        }
+      }
+    }, [isEditMode, initialData]);
+
+    // 市区町村から都道府県を取得する関数
+    const fetchMunicipalityPrefecture = async (municipalityId: number) => {
+      try {
+        console.log('市区町村から都道府県を取得中:', municipalityId);
+        const response = await fetch(`http://localhost:3001/api/region/municipalities/${municipalityId}`);
+        if (response.ok) {
+          const result = await response.json();
+          console.log('取得した市区町村データ:', result);
+          
+          // APIレスポンス形式に合わせて処理
+          const municipality = result.data || result;
+          if (municipality && municipality.prefectureId) {
+            setSelectedPrefectureId(municipality.prefectureId);
+            console.log('都道府県IDを設定:', municipality.prefectureId);
+            
+            // 都道府県が設定されたら市区町村一覧を取得
+            fetchMunicipalities(municipality.prefectureId);
+          }
+        } else {
+          console.error('市区町村データの取得に失敗');
+        }
+      } catch (error) {
+        console.error('市区町村データの取得エラー:', error);
+      }
+    };
 
         // 都道府県一覧を取得
     useEffect(() => {
@@ -102,44 +153,44 @@ const FestivalForm: React.FC = () => {
       fetchPrefectures();
     }, []);
 
+    // 市区町村一覧を取得する関数
+    const fetchMunicipalities = async (prefectureId: number) => {
+      try {
+        console.log('市区町村データを取得中...', prefectureId);
+        const response = await fetch(`http://localhost:3001/api/region/prefectures/${prefectureId}/municipalities`);
+        console.log('市区町村APIレスポンス:', response.status);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('取得した市区町村データ:', data);
+          
+          if (Array.isArray(data)) {
+            setMunicipalities(data);
+          } else if (data && Array.isArray(data.municipalities)) {
+            setMunicipalities(data.municipalities);
+          } else if (data && Array.isArray(data.data)) {
+            setMunicipalities(data.data);
+          } else {
+            console.error('予期しない市区町村データ形式:', data);
+            setMunicipalities([]);
+            setError('市区町村データの形式が正しくありません');
+          }
+        } else {
+          console.error('市区町村取得エラー:', response.status);
+          setMunicipalities([]);
+          setError('市区町村の取得に失敗しました');
+        }
+      } catch (error) {
+        console.error('市区町村取得エラー:', error);
+        setMunicipalities([]);
+        setError('市区町村の取得に失敗しました');
+      }
+    };
+
     // 選択された都道府県の市区町村一覧を取得
     useEffect(() => {
       if (selectedPrefectureId > 0) {
         console.log('市区町村取得useEffect実行開始、都道府県ID:', selectedPrefectureId);
-        const fetchMunicipalities = async () => {
-          try {
-            console.log('市区町村データを取得中...');
-            const response = await fetch(`http://localhost:3001/api/region/prefectures/${selectedPrefectureId}/municipalities`);
-            console.log('市区町村APIレスポンス:', response.status);
-            if (response.ok) {
-              const data = await response.json();
-              console.log('取得した市区町村データ:', data);
-              
-              if (Array.isArray(data)) {
-                setMunicipalities(data);
-              } else if (data && Array.isArray(data.municipalities)) {
-                setMunicipalities(data.municipalities);
-              } else if (data && Array.isArray(data.data)) {
-                setMunicipalities(data.data);
-              } else {
-                console.error('予期しない市区町村データ形式:', data);
-                setMunicipalities([]);
-                setError('市区町村データの形式が正しくありません');
-              }
-            } else {
-              console.error('市区町村取得エラー:', response.status);
-              setMunicipalities([]);
-              setError('市区町村の取得に失敗しました');
-            }
-          } catch (error) {
-            console.error('市区町村取得エラー:', error);
-            setMunicipalities([]);
-            setError('市区町村の取得に失敗しました');
-          }
-        };
-        fetchMunicipalities();
-      } else {
-        setMunicipalities([]);
+        fetchMunicipalities(selectedPrefectureId);
       }
     }, [selectedPrefectureId]);
 
@@ -237,8 +288,14 @@ const FestivalForm: React.FC = () => {
         console.log('送信するトークン:', token);
         console.log('送信するデータ:', formData);
         
-        const response = await fetch('http://localhost:3001/api/festivals', {
-          method: 'POST',
+        const url = isEditMode 
+          ? `http://localhost:3001/api/festivals/${festivalId}`
+          : 'http://localhost:3001/api/festivals';
+        
+        const method = isEditMode ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -248,20 +305,26 @@ const FestivalForm: React.FC = () => {
 
         if (response.ok) {
           setShowSuccessModal(true);
-          setSuccess('お祭りの登録が完了しました！');
+          setSuccess(isEditMode ? 'お祭りの更新が完了しました！' : 'お祭りの登録が完了しました！');
         } else {
           const errorData = await response.json();
-          setError(errorData.error || 'お祭りの登録に失敗しました');
+          setError(errorData.error || (isEditMode ? 'お祭りの更新に失敗しました' : 'お祭りの登録に失敗しました'));
         }
       } catch (error) {
-        setError('お祭りの登録に失敗しました');
+        setError(isEditMode ? 'お祭りの更新に失敗しました' : 'お祭りの登録に失敗しました');
       } finally {
         setLoading(false);
       }
     };
 
     const handleCancel = () => {
-      navigate('/dashboard');
+      if (isEditMode && festivalId) {
+        // 編集モードの場合はお祭り詳細ページに戻る
+        navigate(`/festivals/${festivalId}`);
+      } else {
+        // 新規登録モードの場合はダッシュボードに戻る
+        navigate('/dashboard');
+      }
     };
 
     // 日程を追加
@@ -312,7 +375,7 @@ const FestivalForm: React.FC = () => {
           margin: '0 auto'
         }}>
           <h1 style={{ color: '#333', marginBottom: '1rem' }}>
-            お祭り登録ページ
+            {isEditMode ? 'お祭り編集ページ' : 'お祭り登録ページ'}
           </h1>
           
           {/* デバッグ情報 */}

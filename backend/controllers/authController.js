@@ -83,7 +83,8 @@ const register = async (req, res) => {
     // JWTトークンの生成
     const token = generateToken({ 
       userId: user.id, 
-      username: user.username 
+      username: user.username,
+      isAdmin: user.isAdmin
     });
 
     res.status(201).json({
@@ -147,7 +148,8 @@ const login = async (req, res) => {
     // JWTトークンの生成
     const token = generateToken({ 
       userId: user.id, 
-      username: user.username 
+      username: user.username,
+      isAdmin: user.isAdmin
     });
 
     res.json({

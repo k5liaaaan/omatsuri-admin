@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import Pagination from './Pagination';
 
 interface Festival {
   id: number;
   name: string;
   address: string;
+  isVisible: boolean;
   createdAt: string;
   updatedAt: string;
   municipality: {
@@ -28,27 +31,67 @@ interface Festival {
   }[];
 }
 
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 const FestivalList: React.FC = () => {
   const navigate = useNavigate();
+  const { user, token } = useAuth();
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    limit: 10,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
 
   useEffect(() => {
-    fetchFestivals();
+    fetchFestivals(1);
   }, []);
 
-  const fetchFestivals = async () => {
+  const fetchFestivals = async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3001/api/festivals');
-      setFestivals(response.data);
-    } catch (err) {
+      
+      // 認証が必要な場合のチェック
+      if (!token) {
+        setError('ログインが必要です');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get(`http://localhost:3001/api/festivals?page=${page}&limit=10`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setFestivals(response.data.festivals);
+      setPagination(response.data.pagination);
+    } catch (err: any) {
       console.error('お祭り一覧の取得に失敗しました:', err);
-      setError('お祭り一覧の取得に失敗しました');
+      if (err.response?.status === 401) {
+        setError('ログインが必要です');
+        navigate('/login');
+      } else {
+        setError('お祭り一覧の取得に失敗しました');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    fetchFestivals(page);
   };
 
   const handleBackClick = () => {
@@ -94,7 +137,7 @@ const FestivalList: React.FC = () => {
               お祭り一覧
             </h1>
             <p className="header-subtitle">
-              登録されているお祭りの一覧を表示します
+              {user?.isAdmin ? '全てのお祭りの一覧を表示します' : 'あなたが登録したお祭りの一覧を表示します'}
             </p>
           </div>
           <button
@@ -116,7 +159,7 @@ const FestivalList: React.FC = () => {
           ) : error ? (
             <div className="error">
               <p>{error}</p>
-              <button onClick={fetchFestivals} className="retry-button">
+              <button onClick={() => fetchFestivals(1)} className="retry-button">
                 再試行
               </button>
             </div>
@@ -127,7 +170,7 @@ const FestivalList: React.FC = () => {
             </div>
           ) : (
             <div className="festivals-container">
-              <h2>お祭り一覧 ({festivals.length}件)</h2>
+              <h2>お祭り一覧 ({pagination.totalCount}件)</h2>
               <div className="festivals-list">
                 {festivals.map((festival) => (
                   <div 
@@ -137,7 +180,15 @@ const FestivalList: React.FC = () => {
                     style={{ cursor: 'pointer' }}
                   >
                     <div className="festival-main">
-                      <h3 className="festival-name">{festival.name}</h3>
+                      <div className="festival-name-container">
+                        <h3 className="festival-name">{festival.name}</h3>
+                        {!festival.isVisible && (
+                          <span className="visibility-badge private">
+                            <span className="visibility-icon">🔒</span>
+                            <span className="visibility-text">非公開</span>
+                          </span>
+                        )}
+                      </div>
                       <div className="festival-details">
                         <div className="festival-schedule">
                           {formatScheduleRange(festival.schedules)}
@@ -166,6 +217,13 @@ const FestivalList: React.FC = () => {
                   </div>
                 ))}
               </div>
+              
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                totalCount={pagination.totalCount}
+                onPageChange={handlePageChange}
+              />
             </div>
           )}
         </div>

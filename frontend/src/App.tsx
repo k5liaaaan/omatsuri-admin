@@ -5,6 +5,7 @@ import RegionMasterContainer from './components/RegionMasterContainer';
 import FestivalForm from './components/FestivalForm';
 import FestivalList from './components/FestivalList';
 import FestivalDetail from './components/FestivalDetail';
+import FestivalEditPage from './components/FestivalEditPage';
 import TestFestival from './components/TestFestival';
 import SimpleFestivalForm from './components/SimpleFestivalForm';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -64,6 +65,11 @@ function App() {
          <Route path="/festivals/:id" element={
            <ProtectedRoute>
              <FestivalDetail />
+           </ProtectedRoute>
+         } />
+         <Route path="/festivals/:id/edit" element={
+           <ProtectedRoute>
+             <FestivalEditPage />
            </ProtectedRoute>
          } />
             <Route path="*" element={<Navigate to="/" replace />} />

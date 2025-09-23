@@ -59,6 +59,7 @@ model Festival {
   sponsors        String?      // 協賛（スポンサー）情報（オプション）
   organizerId     Int          // 主催団体ID（ユーザーID）
   organizer       User         @relation(fields: [organizerId], references: [id])
+  isVisible       Boolean      @default(true) // 表示フラグ（true: 表示, false: 非表示）
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 

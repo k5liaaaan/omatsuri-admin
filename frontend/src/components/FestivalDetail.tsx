@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import DeleteConfirmModal from './DeleteConfirmModal';
+import UnpublishConfirmModal from './UnpublishConfirmModal';
 
 interface Festival {
   id: number;
@@ -9,6 +11,7 @@ interface Festival {
   content: string;
   foodStalls: string | null;
   sponsors: string | null;
+  isVisible: boolean;
   createdAt: string;
   updatedAt: string;
   municipality: {
@@ -37,6 +40,12 @@ const FestivalDetail: React.FC = () => {
   const [festival, setFestival] = useState<Festival | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
+  const [showUnpublishModal, setShowUnpublishModal] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [unpublishMessage, setUnpublishMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -63,6 +72,89 @@ const FestivalDetail: React.FC = () => {
 
   const handleBackClick = () => {
     navigate('/festivals');
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!festival) return;
+
+    try {
+      setIsDeleting(true);
+      const token = localStorage.getItem('token');
+      
+      await axios.delete(`http://localhost:3001/api/festivals/${festival.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setDeleteMessage('お祭りが正常に削除されました');
+      setShowDeleteModal(false);
+      
+      // 2秒後にメッセージを表示してからお祭り一覧に遷移
+      setTimeout(() => {
+        navigate('/festivals');
+      }, 2000);
+
+    } catch (err: any) {
+      console.error('削除エラー:', err);
+      setError('お祭りの削除に失敗しました');
+      setShowDeleteModal(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+  };
+
+  const handleUnpublishClick = () => {
+    setShowUnpublishModal(true);
+  };
+
+  const handleUnpublishConfirm = async () => {
+    if (!festival) return;
+
+    try {
+      setIsUnpublishing(true);
+      const token = localStorage.getItem('token');
+      
+      await axios.patch(`http://localhost:3001/api/festivals/${festival.id}/unpublish`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setUnpublishMessage('お祭りを非公開に設定しました');
+      setShowUnpublishModal(false);
+      
+      // 2秒後にメッセージを表示してからお祭り一覧に遷移
+      setTimeout(() => {
+        navigate('/festivals');
+      }, 2000);
+
+    } catch (err: any) {
+      console.error('非公開設定エラー:', err);
+      setError('お祭りの非公開設定に失敗しました');
+      setShowUnpublishModal(false);
+    } finally {
+      setIsUnpublishing(false);
+    }
+  };
+
+  const handleUnpublishCancel = () => {
+    setShowUnpublishModal(false);
+  };
+
+  const handleEditClick = () => {
+    if (festival) {
+      // 編集ページに遷移（お祭りIDをパラメータとして渡す）
+      navigate(`/festivals/${festival.id}/edit`);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -142,6 +234,26 @@ const FestivalDetail: React.FC = () => {
       {/* メインコンテンツ */}
       <main className="festival-detail-main">
         <div className="festival-detail-content">
+          {/* 公開状態 */}
+          <section className="visibility-status-section">
+            <div className="visibility-status">
+              <div className={`status-badge ${festival.isVisible ? 'public' : 'private'}`}>
+                <span className="status-icon">
+                  {festival.isVisible ? '🌐' : '🔒'}
+                </span>
+                <span className="status-text">
+                  {festival.isVisible ? '公開中' : '非公開'}
+                </span>
+              </div>
+              <p className="status-description">
+                {festival.isVisible 
+                  ? 'このお祭りは一般ユーザーに公開されています' 
+                  : 'このお祭りは非公開設定されており、一般ユーザーには表示されません'
+                }
+              </p>
+            </div>
+          </section>
+
           {/* 基本情報 */}
           <section className="festival-info-section">
             <h2>基本情報</h2>
@@ -222,8 +334,73 @@ const FestivalDetail: React.FC = () => {
               </div>
             </section>
           )}
+
+          {/* アクションボタン */}
+          <section className="action-section">
+            <div className="action-buttons">
+              <button 
+                className="action-button edit-button"
+                onClick={handleEditClick}
+              >
+                <span className="button-icon">✏️</span>
+                編集
+              </button>
+              <button 
+                className="action-button unpublish-button"
+                onClick={handleUnpublishClick}
+              >
+                <span className="button-icon">👁️‍🗨️</span>
+                非公開
+              </button>
+              <button 
+                className="action-button delete-button"
+                onClick={handleDeleteClick}
+              >
+                <span className="button-icon">🗑️</span>
+                削除
+              </button>
+            </div>
+          </section>
         </div>
       </main>
+
+      {/* 削除確認モーダル */}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        festivalName={festival?.name || ''}
+        isLoading={isDeleting}
+      />
+
+      {/* 非公開確認モーダル */}
+      <UnpublishConfirmModal
+        isOpen={showUnpublishModal}
+        onClose={handleUnpublishCancel}
+        onConfirm={handleUnpublishConfirm}
+        festivalName={festival?.name || ''}
+        isLoading={isUnpublishing}
+      />
+
+      {/* 削除完了メッセージ */}
+      {deleteMessage && (
+        <div className="delete-success-message">
+          <div className="success-content">
+            <span className="success-icon">✅</span>
+            <p>{deleteMessage}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 非公開設定完了メッセージ */}
+      {unpublishMessage && (
+        <div className="unpublish-success-message">
+          <div className="success-content">
+            <span className="success-icon">👁️‍🗨️</span>
+            <p>{unpublishMessage}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
