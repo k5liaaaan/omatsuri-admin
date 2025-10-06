@@ -49,6 +49,10 @@ app.use('/api/region', regionRoutes);
 const festivalRoutes = require('../routes/festival');
 app.use('/api/festivals', festivalRoutes);
 
+// Public routes
+const publicRoutes = require('../routes/public');
+app.use('/api/public', publicRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
