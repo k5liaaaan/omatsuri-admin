@@ -98,6 +98,7 @@ const FestivalEditPage: React.FC = () => {
     content: festival.content,
     foodStalls: festival.foodStalls || '',
     sponsors: festival.sponsors || '',
+    isVisible: festival.isVisible,
     schedules: festival.schedules.map(schedule => ({
       date: schedule.date,
       startTime: schedule.startTime,

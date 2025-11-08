@@ -61,7 +61,7 @@ omatsuri-nav/
 
 ```bash
 git clone <repository-url>
-cd omatsuri-nav
+cd omatsuri-admin
 ```
 
 ### 2. 依存関係のインストール

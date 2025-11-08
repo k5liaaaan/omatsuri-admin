@@ -20,6 +20,7 @@ interface FestivalFormData {
   content: string;
   foodStalls: string;
   sponsors: string;
+  isVisible: boolean;
   schedules: Array<{
     date: string;
     startTime: string;
@@ -67,6 +68,7 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
          content: '',
          foodStalls: '',
          sponsors: '',
+         isVisible: true,
          schedules: [{
            date: '',
            startTime: '',
@@ -81,7 +83,11 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
     useEffect(() => {
       if (isEditMode && initialData) {
         console.log('編集モード: 初期データを設定', initialData);
-        setFormData(initialData);
+        setFormData(prev => ({
+          ...prev,
+          ...initialData,
+          isVisible: typeof initialData.isVisible === 'boolean' ? initialData.isVisible : true
+        }));
         
         // 市区町村から都道府県を特定
         if (initialData.municipalityId) {
@@ -206,11 +212,25 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
+      if (name === 'isVisible') {
+        setFormData(prev => ({
+          ...prev,
+          isVisible: value === 'true'
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
+    };
+    const handleVisibilityToggle = (value: boolean) => {
       setFormData(prev => ({
         ...prev,
-        [name]: value
+        isVisible: value
       }));
     };
+
 
     // 都道府県選択時の処理
     const handlePrefectureChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -694,6 +714,70 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
                   resize: 'vertical'
                 }}
               />
+            </div>
+
+            <div style={{ 
+              marginBottom: '2rem',
+              padding: '1rem',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              backgroundColor: '#f8f9fa'
+            }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.75rem', 
+                fontWeight: 'bold',
+                fontSize: '1rem'
+              }}>
+                公開設定
+              </label>
+              <p style={{ 
+                marginBottom: '1rem', 
+                color: '#555', 
+                fontSize: '0.9rem' 
+              }}>
+                非公開にすると、一般ユーザーの公開一覧には表示されません。後から公開設定を変更できます。
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  padding: '0.5rem 1rem', 
+                  border: formData.isVisible ? '2px solid #007bff' : '1px solid #ced4da',
+                  borderRadius: '4px',
+                  backgroundColor: formData.isVisible ? '#e7f1ff' : 'white',
+                  cursor: 'pointer'
+                }}>
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value="public"
+                    checked={formData.isVisible}
+                    onChange={() => handleVisibilityToggle(true)}
+                  />
+                  公開
+                </label>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  padding: '0.5rem 1rem', 
+                  border: !formData.isVisible ? '2px solid #dc3545' : '1px solid #ced4da',
+                  borderRadius: '4px',
+                  backgroundColor: !formData.isVisible ? '#fdebea' : 'white',
+                  cursor: 'pointer'
+                }}>
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value="private"
+                    checked={!formData.isVisible}
+                    onChange={() => handleVisibilityToggle(false)}
+                  />
+                  非公開
+                </label>
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>

@@ -89,7 +89,8 @@ const createFestival = async (req, res) => {
       content,
       foodStalls,
       sponsors,
-      schedules
+      schedules,
+      isVisible
     } = req.body;
 
     const organizerId = req.user?.userId; // 認証ミドルウェアから取得
@@ -131,6 +132,17 @@ const createFestival = async (req, res) => {
       return res.status(400).json({ error: '指定された市区町村が見つかりません' });
     }
 
+    const visibilityFlag = (() => {
+      if (typeof isVisible === 'boolean') {
+        return isVisible;
+      }
+      if (typeof isVisible === 'string') {
+        if (isVisible.toLowerCase() === 'true') return true;
+        if (isVisible.toLowerCase() === 'false') return false;
+      }
+      return true;
+    })();
+
     // トランザクションでお祭りと日程を作成
     const festival = await prisma.$transaction(async (tx) => {
       // お祭り基本情報を作成
@@ -142,7 +154,8 @@ const createFestival = async (req, res) => {
           content,
           foodStalls: foodStalls || null,
           sponsors: sponsors || null,
-          organizerId
+          organizerId,
+          isVisible: visibilityFlag
         }
       });
 
@@ -370,7 +383,8 @@ const updateFestival = async (req, res) => {
       content,
       foodStalls,
       sponsors,
-      schedules
+      schedules,
+      isVisible
     } = req.body;
 
     // お祭りの存在確認と権限チェック
@@ -426,6 +440,17 @@ const updateFestival = async (req, res) => {
       return res.status(400).json({ error: '指定された市区町村が見つかりません' });
     }
 
+    const visibilityFlag = (() => {
+      if (typeof isVisible === 'boolean') {
+        return isVisible;
+      }
+      if (typeof isVisible === 'string') {
+        if (isVisible.toLowerCase() === 'true') return true;
+        if (isVisible.toLowerCase() === 'false') return false;
+      }
+      return existingFestival.isVisible;
+    })();
+
     // トランザクションでお祭りと日程を更新
     const updatedFestival = await prisma.$transaction(async (tx) => {
       // 既存のスケジュールを削除
@@ -442,7 +467,8 @@ const updateFestival = async (req, res) => {
           address,
           content,
           foodStalls: foodStalls || null,
-          sponsors: sponsors || null
+          sponsors: sponsors || null,
+          isVisible: visibilityFlag
         }
       });
 
