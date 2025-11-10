@@ -42,6 +42,7 @@ omatsuri-nav/
 │   │   ├── routes/            # ルート定義
 │   │   ├── utils/             # ユーティリティ
 │   │   └── index.js           # エントリーポイント
+│   ├── config/                 # 環境設定（メール・URL など）
 │   ├── prisma/                # データベース関連
 │   │   ├── schema.prisma      # データベーススキーマ
 │   │   └── dev.db            # SQLiteデータベース
@@ -82,6 +83,20 @@ NODE_ENV=development
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=24h
 FRONTEND_URL=http://localhost:5173
+FRONTEND_BASE_URL=http://localhost:5173
+
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_SECURE=false
+MAIL_USER=your-smtp-username
+MAIL_PASS=your-smtp-password
+MAIL_FROM=no-reply@example.com
+# 任意設定
+# MAIL_REPLY_TO=support@example.com
+# MAIL_SUBJECT_REGISTRATION=【おまつり管理】メールアドレスの確認について
+# MAIL_BODY_REGISTRATION=カスタム本文（{{verificationUrl}} と {{expiresAt}} を含めてください）
+# MAIL_SUBJECT_EMAIL_CHANGE=【おまつり管理】新しいメールアドレスの確認
+# MAIL_BODY_EMAIL_CHANGE=カスタム本文（{{verificationUrl}} と {{expiresAt}} を含めてください）
 ```
 
 #### フロントエンド環境変数
@@ -162,6 +177,8 @@ npm run db:studio
 - **festivals** - お祭り基本情報
 - **festival_schedules** - お祭り開催日程
 - **login_attempts** - ログイン試行履歴
+- **pending_user_registrations** - 仮登録情報（メール認証用）
+- **pending_email_changes** - メールアドレス変更待ち情報
 
 ### データベース操作コマンド
 
@@ -228,11 +245,28 @@ npm run db:studio
 - `isAdmin`: `true`
 
 #### 一般ユーザーの作成
-ログイン画面の「アカウント作成」機能を使用するか、Prisma Studioで手動追加
+ログイン画面で「仮登録メールを送信する」を選択し、メールに記載されたリンクから本登録を完了します。開発用途で直接追加したい場合は Prisma Studio から `users` テーブルへ手動登録してください。
+
+### 会員登録フロー
+1. ログイン画面でメールアドレスを入力し、`POST /api/auth/register` により仮登録メールを送信します。
+2. 届いたメールのリンク（例：`http://localhost:5173/complete-registration?token=...`）から本登録ページへアクセスします。
+3. ユーザー名・パスワード・お祭り主催団体名（任意）を入力して `POST /api/auth/complete-registration` を呼び出し、本登録を完了します。
+4. 登録完了後は自動でログイン状態となり、ダッシュボードへ遷移します。
+
+- トークンの有効期限は 1 週間です。期限切れの場合は再度仮登録を実施してください。
+- 認証メールの設定は `backend/config/mail.js` で管理しています。`.env` に設定した SMTP 情報／件名／本文テンプレートを利用し、`{{verificationUrl}}` と `{{expiresAt}}` プレースホルダーが本文内で展開されます。
+
+### プロフィール編集フロー
+1. ログイン後、ダッシュボードの「プロフィールを編集」ボタンから `/profile/edit` にアクセスします。
+2. 以下の項目を変更できます（いずれか1項目以上の変更が必須。送信時は現在のパスワード入力が必要）  
+   - 新しいメールアドレス（確認メール送信 → `POST /api/auth/confirm-email-change` で確定）  
+   - 主催団体名（即時反映。空欄にすると未登録扱い）  
+   - パスワード（新しいパスワード＋確認用パスワード）
+3. メール変更が保留中の間は、ダッシュボードと編集ページに「確認中」のステータスが表示されます。確認リンクの有効期限は 1 週間です。
 
 ### セキュリティ設定
 - DBに登録されているユーザーのみログイン可能
-- ログイン画面でアカウント作成も可能
+- ログイン画面からの新規登録はメール認証必須
 - 管理者と一般ユーザーの2種類のユーザータイプ
 
 ## 🛠️ 使用技術
@@ -260,9 +294,12 @@ npm run db:studio
 ## 🔌 API エンドポイント
 
 ### 認証関連
-- `POST /api/auth/register` - ユーザー登録
+- `POST /api/auth/register` - 仮登録メール送信（メールアドレスのみ）
+- `POST /api/auth/complete-registration` - 本登録完了（トークン・ユーザー名・パスワード・主催団体名）
 - `POST /api/auth/login` - ユーザーログイン
 - `GET /api/auth/profile` - ユーザープロフィール取得（認証必要）
+- `PATCH /api/user/profile` - プロフィール更新（認証必要）
+- `POST /api/auth/confirm-email-change` - メールアドレス変更の確定（確認リンク用）
 
 ### 地域マスター関連
 - `GET /api/region/prefectures` - 都道府県一覧取得

@@ -49,6 +49,10 @@ app.use('/api/region', regionRoutes);
 const festivalRoutes = require('../routes/festival');
 app.use('/api/festivals', festivalRoutes);
 
+// User routes
+const userRoutes = require('../routes/user');
+app.use('/api/user', userRoutes);
+
 // Public routes
 const publicRoutes = require('../routes/public');
 app.use('/api/public', publicRoutes);

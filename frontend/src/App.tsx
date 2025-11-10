@@ -9,6 +9,9 @@ import FestivalEditPage from './components/FestivalEditPage';
 import TestFestival from './components/TestFestival';
 import SimpleFestivalForm from './components/SimpleFestivalForm';
 import ProtectedRoute from './components/ProtectedRoute';
+import CompleteRegistration from './components/CompleteRegistration';
+import ProfileEdit from './components/ProfileEdit';
+import ConfirmEmailChange from './components/ConfirmEmailChange';
 import './App.css';
 
 function App() {
@@ -72,6 +75,13 @@ function App() {
              <FestivalEditPage />
            </ProtectedRoute>
          } />
+         <Route path="/profile/edit" element={
+           <ProtectedRoute>
+             <ProfileEdit />
+           </ProtectedRoute>
+         } />
+            <Route path="/complete-registration" element={<CompleteRegistration />} />
+            <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

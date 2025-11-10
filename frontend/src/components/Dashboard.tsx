@@ -6,6 +6,8 @@ const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const pendingEmailChange = user?.pendingEmailChange || null;
+
   const handleLogout = () => {
     logout();
   };
@@ -25,6 +27,10 @@ const Dashboard: React.FC = () => {
     navigate('/festivals');
   };
 
+  const handleProfileEditClick = () => {
+    navigate('/profile/edit');
+  };
+
   return (
     <div className="dashboard">
       {/* ヘッダー */}
@@ -38,10 +44,13 @@ const Dashboard: React.FC = () => {
               お祭りナビゲーションシステム
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="header-user-info">
             <div className="user-info">
               <p className="user-name">
-                {user?.username}
+                {user?.organizerName ? `${user.organizerName}（${user.username}）` : user?.username}
+              </p>
+              <p className="user-email">
+                {user?.email}
               </p>
             </div>
             <button
@@ -71,8 +80,18 @@ const Dashboard: React.FC = () => {
             </h3>
             <div>
               <div className="user-info-row">
+                <span className="user-info-label">主催団体名:</span>
+                <span className="user-info-value">{user?.organizerName || '未登録'}</span>
+              </div>
+
+              <div className="user-info-row">
                 <span className="user-info-label">ユーザー名:</span>
                 <span className="user-info-value">{user?.username}</span>
+              </div>
+
+              <div className="user-info-row">
+                <span className="user-info-label">メールアドレス:</span>
+                <span className="user-info-value">{user?.email}</span>
               </div>
 
               <div className="user-info-row">
@@ -82,6 +101,22 @@ const Dashboard: React.FC = () => {
                 </span>
               </div>
             </div>
+
+            {pendingEmailChange && (
+              <div className="pending-email-notice">
+                <p>
+                  新しいメールアドレス <strong>{pendingEmailChange.email}</strong> の確認待ちです。
+                </p>
+                <p>
+                  有効期限: {new Date(pendingEmailChange.expiresAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}
+                </p>
+                <p>メール内のリンクを開くと変更が完了します。</p>
+              </div>
+            )}
+
+            <button className="primary-button profile-edit-link" onClick={handleProfileEditClick}>
+              プロフィールを編集
+            </button>
           </div>
 
           {/* 管理者機能カード */}

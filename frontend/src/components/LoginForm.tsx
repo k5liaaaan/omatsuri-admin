@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
+type Mode = 'login' | 'register';
+
 const LoginForm: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<Mode>('login');
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
+    identifier: '',
     password: '',
-    confirmPassword: ''
+    email: ''
   });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   
-  const { login, register, isLoading, error } = useAuth();
+  const { login, requestRegistration, isLoading, error } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -19,7 +21,7 @@ const LoginForm: React.FC = () => {
       ...prev,
       [name]: value
     }));
-    // エラーをクリア
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -29,30 +31,23 @@ const LoginForm: React.FC = () => {
   };
 
   const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
+    const newErrors: Record<string, string> = {};
 
-    if (!formData.username.trim()) {
-      newErrors.username = 'ユーザー名を入力してください';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'ユーザー名は3文字以上で入力してください';
-    }
-
-    if (!isLogin) {
+    if (mode === 'login') {
+      if (!formData.identifier.trim()) {
+        newErrors.identifier = 'ユーザー名またはメールアドレスを入力してください';
+      }
+      if (!formData.password) {
+        newErrors.password = 'パスワードを入力してください';
+      } else if (formData.password.length < 6) {
+        newErrors.password = 'パスワードは6文字以上で入力してください';
+      }
+    } else {
       if (!formData.email.trim()) {
         newErrors.email = 'メールアドレスを入力してください';
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      } else if (!/\S+@\S+\.\S+/.test(formData.email.trim())) {
         newErrors.email = '有効なメールアドレスを入力してください';
       }
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'パスワードを入力してください';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'パスワードは6文字以上で入力してください';
-    }
-
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'パスワードが一致しません';
     }
 
     setErrors(newErrors);
@@ -61,61 +56,87 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     try {
-      if (isLogin) {
-        await login(formData.username, formData.password);
+      if (mode === 'login') {
+        await login(formData.identifier.trim(), formData.password);
       } else {
-        await register(formData.username, formData.email, formData.password);
+        await requestRegistration(formData.email.trim());
+        setRegistrationSuccess(true);
+        setFormData(prev => ({
+          ...prev,
+          email: ''
+        }));
       }
-    } catch (error) {
-      // エラーはAuthContextで処理される
+    } catch (submissionError) {
+      // エラーは AuthContext 側で保持
+      setRegistrationSuccess(false);
     }
   };
 
   const toggleMode = () => {
-    setIsLogin(!isLogin);
+    setMode(prev => (prev === 'login' ? 'register' : 'login'));
     setFormData({
-      username: '',
-      email: '',
+      identifier: '',
       password: '',
-      confirmPassword: ''
+      email: ''
     });
     setErrors({});
+    setRegistrationSuccess(false);
   };
 
   return (
     <div className="login-container">
       <div className="login-form">
-                 <h2 className="login-title">
-           {isLogin ? 'ログイン' : 'アカウント作成'}
-         </h2>
-         <p className="login-subtitle">
-           {isLogin ? 'アカウント情報を入力してください' : '新しいアカウントを作成してください'}
-         </p>
-        
+        <h2 className="login-title">
+          {mode === 'login' ? 'ログイン' : '仮登録（メール送信）'}
+        </h2>
+        <p className="login-subtitle">
+          {mode === 'login'
+            ? 'ユーザー名またはメールアドレスとパスワードを入力してください'
+            : '登録用の確認メールを受け取るメールアドレスを入力してください'}
+        </p>
+
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <input
-              id="username"
-              name="username"
-              type="text"
-              required
-              className={`form-input ${errors.username ? 'error' : ''}`}
-              placeholder="ユーザー名"
-              value={formData.username}
-              onChange={handleInputChange}
-            />
-            {errors.username && (
-              <p className="error-message">{errors.username}</p>
-            )}
-          </div>
-          
-          {!isLogin && (
+          {mode === 'login' ? (
+            <>
+              <div className="form-group">
+                <input
+                  id="identifier"
+                  name="identifier"
+                  type="text"
+                  required
+                  className={`form-input ${errors.identifier ? 'error' : ''}`}
+                  placeholder="ユーザー名またはメールアドレス"
+                  value={formData.identifier}
+                  onChange={handleInputChange}
+                />
+                {errors.identifier && (
+                  <p className="error-message">{errors.identifier}</p>
+                )}
+              </div>
+
+              <div className="form-group">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className={`form-input ${errors.password ? 'error' : ''}`}
+                  placeholder="パスワード"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                />
+                {errors.password && (
+                  <p className="error-message">{errors.password}</p>
+                )}
+              </div>
+            </>
+          ) : (
             <div className="form-group">
               <input
                 id="email"
@@ -132,44 +153,18 @@ const LoginForm: React.FC = () => {
               )}
             </div>
           )}
-          
-          <div className="form-group">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className={`form-input ${errors.password ? 'error' : ''}`}
-              placeholder="パスワード"
-              value={formData.password}
-              onChange={handleInputChange}
-            />
-            {errors.password && (
-              <p className="error-message">{errors.password}</p>
-            )}
-          </div>
-          
-          {!isLogin && (
-            <div className="form-group">
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
-                placeholder="パスワード確認"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-              />
-              {errors.confirmPassword && (
-                <p className="error-message">{errors.confirmPassword}</p>
-              )}
-            </div>
-          )}
 
           {error && (
             <div style={{ background: '#fef2f2', padding: '1rem', borderRadius: '0.375rem', marginBottom: '1rem' }}>
               <div style={{ color: '#dc2626', fontSize: '0.875rem' }}>{error}</div>
+            </div>
+          )}
+
+          {registrationSuccess && (
+            <div style={{ background: '#ecfdf5', padding: '1rem', borderRadius: '0.375rem', marginBottom: '1rem' }}>
+              <div style={{ color: '#047857', fontSize: '0.875rem' }}>
+                確認メールを送信しました。メールに記載のリンクから本登録を完了してください（有効期限：1週間）。
+              </div>
             </div>
           )}
 
@@ -178,16 +173,16 @@ const LoginForm: React.FC = () => {
             disabled={isLoading}
             className="login-button"
           >
-            {isLoading ? '処理中...' : (isLogin ? 'ログイン' : '登録')}
+            {isLoading ? '処理中...' : (mode === 'login' ? 'ログイン' : 'メールを送信する')}
           </button>
 
-                     <button
-             type="button"
-             onClick={toggleMode}
-             className="toggle-button"
-           >
-             {isLogin ? 'アカウントを作成する' : 'ログインに戻る'}
-           </button>
+          <button
+            type="button"
+            onClick={toggleMode}
+            className="toggle-button"
+          >
+            {mode === 'login' ? '仮登録メールを送信する' : 'ログインに戻る'}
+          </button>
         </form>
       </div>
     </div>

@@ -1,19 +1,36 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import axios from 'axios';
+
+interface PendingEmailChange {
+  email: string;
+  expiresAt: string;
+}
 
 interface User {
   id: number;
   username: string;
   email: string;
+  organizerName?: string | null;
   isAdmin: boolean;
   createdAt: string;
+  pendingEmailChange?: PendingEmailChange | null;
+}
+
+interface CompleteRegistrationInput {
+  token: string;
+  username: string;
+  password: string;
+  organizerName?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
+  requestRegistration: (email: string) => Promise<void>;
+  completeRegistration: (input: CompleteRegistrationInput) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   error: string | null;
@@ -77,13 +94,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [token]);
 
-  const login = async (username: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
     try {
       setError(null);
       setIsLoading(true);
       
       const response = await axios.post('/api/auth/login', {
-        username,
+        username: identifier,
         password
       });
 
@@ -103,26 +120,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const register = async (username: string, password: string) => {
+  const requestRegistration = async (email: string) => {
     try {
       setError(null);
       setIsLoading(true);
       
-      const response = await axios.post('/api/auth/register', {
-        username,
-        email: `${username}@example.com`, // ダミーメールアドレス
-        password
+      await axios.post('/api/auth/register', {
+        email
+      });
+    } catch (error: any) {
+      console.error('Request registration error:', error.response?.data);
+      const errorMessage = error.response?.data?.error || '仮登録に失敗しました';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const completeRegistration = async (input: CompleteRegistrationInput) => {
+    try {
+      setError(null);
+      setIsLoading(true);
+
+      const response = await axios.post('/api/auth/complete-registration', {
+        token: input.token,
+        username: input.username,
+        password: input.password,
+        organizerName: input.organizerName
       });
 
-      console.log('Register response:', response.data); // デバッグ用
-      
+      console.log('Complete registration response:', response.data);
+
       const { user: userData, token: newToken } = response.data;
-      
+
       setUser(userData);
       setToken(newToken);
     } catch (error: any) {
-      console.error('Register error:', error.response?.data); // デバッグ用
-      const errorMessage = error.response?.data?.error || 'アカウント作成に失敗しました';
+      console.error('Complete registration error:', error.response?.data);
+      const errorMessage = error.response?.data?.error || '本登録に失敗しました';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -146,11 +182,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const refreshProfile = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const response = await axios.get('/api/auth/profile');
+      setUser(response.data.user);
+    } catch (error) {
+      console.error('Profile refresh error:', error);
+    }
+  }, [token]);
+
   const value: AuthContextType = {
     user,
     token,
     login,
-    register,
+    requestRegistration,
+    completeRegistration,
+    refreshProfile,
     logout,
     isLoading,
     error

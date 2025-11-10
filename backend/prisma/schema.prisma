@@ -15,13 +15,43 @@ model User {
   username  String   @unique
   email     String   @unique
   password  String
+  organizerName String? // お祭り主催団体名
   isAdmin   Boolean  @default(false) // 管理者フラグ
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   festivals Festival[] // お祭りとの関連
+  pendingEmailChanges PendingEmailChange[]
 
   @@map("users")
+}
+
+model PendingUserRegistration {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  token      String   @unique
+  expiresAt  DateTime
+  completed  Boolean  @default(false)
+  completedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("pending_user_registrations")
+}
+
+model PendingEmailChange {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newEmail   String
+  token      String   @unique
+  expiresAt  DateTime
+  completed  Boolean  @default(false)
+  completedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("pending_email_changes")
 }
 
 model Prefecture {

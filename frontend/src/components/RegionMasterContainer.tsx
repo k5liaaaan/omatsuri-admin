@@ -33,7 +33,6 @@ const RegionMasterContainer: React.FC = () => {
   // 市区町村登録・編集画面の場合
   if (prefectureId && municipalityId) {
     // 編集画面の場合
-    const isEdit = true;
     const actualMunicipalityId = parseInt(municipalityId);
     
     return (
