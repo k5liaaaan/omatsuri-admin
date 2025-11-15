@@ -25,6 +25,7 @@ interface Festival {
   organizer: {
     id: number;
     username: string;
+    organizerName: string | null;
   };
   schedules: {
     id: number;
@@ -274,7 +275,7 @@ const FestivalDetail: React.FC = () => {
               <div className="info-item">
                 <label>主催者</label>
                 <div className="info-value">
-                  {festival.organizer.username}
+                  {festival.organizer.organizerName || '未設定'}
                 </div>
               </div>
               <div className="info-item">

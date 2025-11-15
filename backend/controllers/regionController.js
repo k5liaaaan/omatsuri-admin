@@ -288,6 +288,81 @@ const updateMunicipality = async (req, res) => {
   }
 };
 
+// 市区町村リクエストを作成
+const createMunicipalityRequest = async (req, res) => {
+  try {
+    const { prefectureId, name } = req.body;
+
+    // バリデーション
+    if (!prefectureId || !name) {
+      return res.status(400).json({
+        success: false,
+        message: '都道府県と市区町村名は必須です'
+      });
+    }
+
+    // 都道府県の存在確認
+    const prefecture = await prisma.prefecture.findUnique({
+      where: { id: parseInt(prefectureId) }
+    });
+
+    if (!prefecture) {
+      return res.status(404).json({
+        success: false,
+        message: '都道府県が見つかりません'
+      });
+    }
+
+    // 市区町村リクエストを作成
+    const request = await prisma.municipalityRequest.create({
+      data: {
+        prefectureId: parseInt(prefectureId),
+        name: name.trim()
+      },
+      include: {
+        prefecture: true
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: '市区町村追加リクエストを送信しました',
+      data: request
+    });
+  } catch (error) {
+    console.error('市区町村リクエスト作成エラー:', error);
+    res.status(500).json({
+      success: false,
+      message: '市区町村リクエストの作成に失敗しました'
+    });
+  }
+};
+
+// 市区町村リクエスト一覧を取得（管理者のみ）
+const getMunicipalityRequests = async (req, res) => {
+  try {
+    const requests = await prisma.municipalityRequest.findMany({
+      include: {
+        prefecture: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json({
+      success: true,
+      data: requests
+    });
+  } catch (error) {
+    console.error('市区町村リクエスト取得エラー:', error);
+    res.status(500).json({
+      success: false,
+      message: '市区町村リクエストの取得に失敗しました'
+    });
+  }
+};
+
 module.exports = {
   getPrefectures,
   getPrefectureById,
@@ -296,5 +371,7 @@ module.exports = {
   createPrefecture,
   createMunicipality,
   getMunicipalityById,
-  updateMunicipality
+  updateMunicipality,
+  createMunicipalityRequest,
+  getMunicipalityRequests
 };

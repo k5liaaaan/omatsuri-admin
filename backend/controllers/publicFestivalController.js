@@ -52,7 +52,7 @@ const getPublicFestivals = async (req, res) => {
       take: limit,
       include: {
         municipality: { include: { prefecture: true } },
-        organizer: { select: { id: true, username: true } },
+        organizer: { select: { id: true, username: true, organizerName: true } },
         schedules: { orderBy: { date: 'asc' } }
       },
       orderBy: orderByClause
@@ -86,7 +86,7 @@ const getPublicFestivalById = async (req, res) => {
       where: { id: parseInt(id), isVisible: true },
       include: {
         municipality: { include: { prefecture: true } },
-        organizer: { select: { id: true, username: true } },
+        organizer: { select: { id: true, username: true, organizerName: true } },
         schedules: { orderBy: { date: 'asc' } }
       }
     });

@@ -305,9 +305,81 @@ const confirmEmailChange = async (req, res) => {
   }
 };
 
+// ユーザー一覧取得（管理者のみ）
+const getUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        organizerName: true,
+        isAdmin: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json({
+      data: users
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: 'ユーザー一覧の取得に失敗しました' });
+  }
+};
+
+// ユーザー削除（管理者のみ）
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = parseInt(id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: '無効なユーザーIDです' });
+    }
+
+    // 自分自身を削除しようとしている場合はエラー
+    if (userId === req.user.userId) {
+      return res.status(400).json({ error: '自分自身を削除することはできません' });
+    }
+
+    // ユーザーの存在確認
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    }
+
+    // 管理者アカウントは削除できない
+    if (user.isAdmin) {
+      return res.status(400).json({ error: '管理者アカウントは削除できません' });
+    }
+
+    // ユーザーを削除（関連データもCASCADEで削除される）
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    res.json({
+      message: 'ユーザーを削除しました'
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'ユーザーの削除に失敗しました' });
+  }
+};
+
 module.exports = {
   profileUpdateValidation,
   updateProfile,
-  confirmEmailChange
+  confirmEmailChange,
+  getUsers,
+  deleteUser
 };
 

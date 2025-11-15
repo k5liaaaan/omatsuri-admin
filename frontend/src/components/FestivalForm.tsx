@@ -613,6 +613,25 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
                    </option>
                  ))}
                </select>
+               <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
+                 <p style={{ margin: '0.25rem 0' }}>
+                   該当する市区町村がない場合は以下にご入力ください
+                 </p>
+                 <a 
+                   href="/municipality-request" 
+                   style={{ 
+                     color: '#007bff', 
+                     textDecoration: 'underline',
+                     cursor: 'pointer'
+                   }}
+                   onClick={(e) => {
+                     e.preventDefault();
+                     navigate('/municipality-request');
+                   }}
+                 >
+                   市区町村追加
+                 </a>
+               </div>
              </div>
 
             <div style={{ marginBottom: '1rem' }}>

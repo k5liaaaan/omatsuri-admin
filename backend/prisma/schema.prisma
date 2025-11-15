@@ -59,6 +59,7 @@ model Prefecture {
   code        String        @unique // 都道府県コード（例：12）
   name        String        @unique // 都道府県名（例：千葉県）
   municipalities Municipality[]
+  municipalityRequests MunicipalityRequest[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -119,4 +120,16 @@ model LoginAttempt {
   createdAt DateTime @default(now())
 
   @@map("login_attempts")
+}
+
+model MunicipalityRequest {
+  id           Int      @id @default(autoincrement())
+  prefectureId Int      // 都道府県ID
+  prefecture   Prefecture @relation(fields: [prefectureId], references: [id])
+  name         String   // リクエストされた市区町村名
+  status       String   @default("pending") // pending, approved, rejected
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("municipality_requests")
 }

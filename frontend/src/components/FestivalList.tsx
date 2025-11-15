@@ -22,6 +22,7 @@ interface Festival {
   organizer: {
     id: number;
     username: string;
+    organizerName: string | null;
   };
   schedules: {
     id: number;
@@ -202,7 +203,7 @@ const FestivalList: React.FC = () => {
                     <div className="festival-meta">
                       <div className="festival-info">
                         <div className="festival-organizer">
-                          主催: {festival.organizer.username}
+                          主催: {festival.organizer.organizerName || '未設定'}
                         </div>
                         <div className="festival-created">
                           {formatDate(festival.createdAt)}

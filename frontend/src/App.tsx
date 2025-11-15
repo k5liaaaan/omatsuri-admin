@@ -12,6 +12,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import CompleteRegistration from './components/CompleteRegistration';
 import ProfileEdit from './components/ProfileEdit';
 import ConfirmEmailChange from './components/ConfirmEmailChange';
+import AccountManagement from './components/AccountManagement';
+import MunicipalityRequestForm from './components/MunicipalityRequestForm';
+import MunicipalityRequestList from './components/MunicipalityRequestList';
 import './App.css';
 
 function App() {
@@ -80,6 +83,21 @@ function App() {
              <ProfileEdit />
            </ProtectedRoute>
          } />
+            <Route path="/accounts" element={
+              <ProtectedRoute>
+                <AccountManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/municipality-request" element={
+              <ProtectedRoute>
+                <MunicipalityRequestForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/municipality-requests" element={
+              <ProtectedRoute>
+                <MunicipalityRequestList />
+              </ProtectedRoute>
+            } />
             <Route path="/complete-registration" element={<CompleteRegistration />} />
             <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
             <Route path="*" element={<Navigate to="/" replace />} />

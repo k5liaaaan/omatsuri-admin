@@ -38,7 +38,8 @@ const getFestivals = async (req, res) => {
         organizer: {
           select: {
             id: true,
-            username: true
+            username: true,
+            organizerName: true
           }
         },
         schedules: {
@@ -251,7 +252,8 @@ const getFestivalById = async (req, res) => {
         organizer: {
           select: {
             id: true,
-            username: true
+            username: true,
+            organizerName: true
           }
         },
         schedules: {

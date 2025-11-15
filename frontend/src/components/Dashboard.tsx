@@ -31,6 +31,10 @@ const Dashboard: React.FC = () => {
     navigate('/profile/edit');
   };
 
+  const handleAccountManagementClick = () => {
+    navigate('/accounts');
+  };
+
   return (
     <div className="dashboard">
       {/* ヘッダー */}
@@ -136,6 +140,33 @@ const Dashboard: React.FC = () => {
                   </h3>
                   <p className="feature-description">
                     都道府県・市区町村の管理
+                  </p>
+                </div>
+                <div className="feature-card admin-card" onClick={handleAccountManagementClick}>
+                  <div className="feature-icon">
+                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="feature-title">
+                    アカウント管理
+                  </h3>
+                  <p className="feature-description">
+                    ユーザーアカウントの管理
+                  </p>
+                </div>
+                <div className="feature-card admin-card" onClick={() => navigate('/municipality-requests')}>
+                  <div className="feature-icon">
+                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="feature-title">
+                    市区町村リクエスト
+                  </h3>
+                  <p className="feature-description">
+                    市区町村追加リクエストの確認
                   </p>
                 </div>
               </div>
