@@ -98,19 +98,6 @@ const MunicipalityRequestList: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return '#ffc107';
-      case 'approved':
-        return '#28a745';
-      case 'rejected':
-        return '#dc3545';
-      default:
-        return '#6c757d';
-    }
-  };
-
   if (!user?.isAdmin) {
     return null;
   }
@@ -142,7 +129,8 @@ const MunicipalityRequestList: React.FC = () => {
         <div className="municipality-request-list-content">
           {loading ? (
             <div className="loading">
-              <p>市区町村リクエスト一覧を読み込み中...</p>
+              <div className="loading-spinner"></div>
+              <p className="loading-text">市区町村リクエスト一覧を読み込み中...</p>
             </div>
           ) : error ? (
             <div className="error">
@@ -158,27 +146,26 @@ const MunicipalityRequestList: React.FC = () => {
             </div>
           ) : (
             <div className="requests-container">
-              <h2>市区町村リクエスト一覧 ({requests.length}件)</h2>
+              <div className="section-header">
+                <h2 className="section-title">市区町村リクエスト一覧 ({requests.length}件)</h2>
+              </div>
               <div className="requests-list">
                 {requests.map((request) => (
                   <div 
                     key={request.id} 
-                    className="request-item"
+                    className={`request-item ${request.status === 'pending' ? 'pending' : ''}`}
                   >
+                    {request.status === 'pending' && (
+                      <div className="request-highlight-bar"></div>
+                    )}
                     <div className="request-main">
                       <div className="request-info">
                         <div className="request-header">
-                          <h3 className="request-name">{request.prefecture.name} {request.name}</h3>
+                          <h3 className="request-name">
+                            {request.prefecture.name} {request.name}
+                          </h3>
                           <span 
-                            className="status-badge"
-                            style={{ 
-                              backgroundColor: getStatusColor(request.status),
-                              color: 'white',
-                              padding: '0.25rem 0.75rem',
-                              borderRadius: '4px',
-                              fontSize: '0.875rem',
-                              fontWeight: 'bold'
-                            }}
+                            className={`status-badge status-${request.status}`}
                           >
                             {getStatusLabel(request.status)}
                           </span>

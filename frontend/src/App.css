@@ -1110,3 +1110,296 @@
     font-size: 0.65rem;
   }
 }
+
+/* 市区町村リクエスト一覧ページのスタイル */
+.municipality-request-list {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.municipality-request-list-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.municipality-request-list-header .header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.municipality-request-list-header .header-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.municipality-request-list-header .header-subtitle {
+  font-size: 1.2rem;
+  margin: 0.5rem 0 0 0;
+  opacity: 0.9;
+}
+
+.municipality-request-list-main {
+  padding: 2rem 0;
+}
+
+.municipality-request-list-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.municipality-request-list .loading,
+.municipality-request-list .error,
+.municipality-request-list .no-requests {
+  text-align: center;
+  padding: 3rem 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.municipality-request-list .loading p,
+.municipality-request-list .error p,
+.municipality-request-list .no-requests p {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 0;
+}
+
+.municipality-request-list .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.municipality-request-list .loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.municipality-request-list .loading-text {
+  color: #6b7280;
+  margin-top: 1rem;
+}
+
+.municipality-request-list .retry-button {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background 0.3s ease;
+}
+
+.municipality-request-list .retry-button:hover {
+  background: #5a6fd8;
+}
+
+.requests-container {
+  margin-top: 2rem;
+}
+
+.requests-container .section-header {
+  margin-bottom: 2rem;
+}
+
+.requests-container .section-title {
+  color: #333;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+}
+
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.request-item {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.request-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.request-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  border-color: #667eea;
+}
+
+.request-item:hover::before {
+  left: 100%;
+}
+
+.request-item.pending {
+  border-left: 4px solid #ffc107;
+}
+
+.request-highlight-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #ffc107 0%, #ffca2c 50%, #ffc107 100%);
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+.request-main {
+  position: relative;
+  z-index: 1;
+}
+
+.request-info {
+  width: 100%;
+}
+
+.request-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.request-name {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+}
+
+.request-item .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.request-item .status-badge.status-pending {
+  background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
+  color: #333;
+}
+
+.request-item .status-badge.status-approved {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+.request-item .status-badge.status-rejected {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.request-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.request-detail-row {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  align-items: flex-start;
+}
+
+.request-label {
+  font-weight: 600;
+  color: #666;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.request-value {
+  color: #333;
+  flex: 1;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .municipality-request-list-header .header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .municipality-request-list-header .header-title {
+    font-size: 2rem;
+  }
+
+  .municipality-request-list-header .header-subtitle {
+    font-size: 1rem;
+  }
+
+  .requests-container .section-title {
+    font-size: 1.5rem;
+  }
+
+  .request-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .request-name {
+    font-size: 1.1rem;
+    width: 100%;
+  }
+
+  .request-detail-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .request-label {
+    min-width: auto;
+  }
+}

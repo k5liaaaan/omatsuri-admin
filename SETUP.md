@@ -65,6 +65,9 @@ npm run db:generate
 # データベーススキーマの同期
 npm run db:push
 
+# 47都道府県データの自動投入（初回環境構築時に自動実行）
+npm run db:seed
+
 # 管理者アカウントの作成（手動でデータベースに追加）
 ```
 
@@ -139,9 +142,30 @@ npm run db:generate
 # データベーススキーマの同期
 npm run db:push
 
+# マイグレーションの実行（スキーマ変更時）
+npm run db:migrate
+
+# 47都道府県データの投入（環境構築時・データリセット時）
+npm run db:seed
+
 # Prisma Studioの起動
 npm run db:studio
 ```
+
+### 都道府県マスターデータ
+
+環境構築時に自動的に日本の47都道府県データがデータベースに投入されます：
+
+```bash
+cd backend
+npm run db:seed
+```
+
+このコマンドにより、以下の47都道府県が自動的に作成されます：
+- 北海道（01）から沖縄県（47）まで
+- 既に存在する都道府県はスキップされ、重複エラーは発生しません
+
+**注意**: `prisma migrate reset` コマンドを実行すると、自動的にシードが実行されます（`prisma.seed`設定により）。
 
 ### サンプルデータの投入
 
@@ -249,6 +273,7 @@ pkill -f node
 cd backend
 rm -rf prisma/dev.db
 npm run db:push
+npm run db:seed  # 47都道府県データを投入
 # 管理者アカウントはPrisma Studioで手動追加
 ```
 

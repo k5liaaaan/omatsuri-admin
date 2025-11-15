@@ -70,7 +70,10 @@ npm install
 cd backend
 npm run db:generate
 npm run db:push
+npm run db:seed  # 47都道府県データの自動投入
 ```
+
+**注意**: データベースをリセットする場合は `npm run db:migrate reset` を実行すると、自動的に47都道府県データも投入されます。
 
 ### 4. 開発サーバーの起動
 
