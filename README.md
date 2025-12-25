@@ -62,7 +62,7 @@ npm install
 
 ### 2. 環境変数の設定
 
-`backend/.env` と `frontend/.env` を作成してください。詳細は [SETUP.md](./SETUP.md) を参照してください。
+`backend/.env` と `frontend/.env` を作成してください。詳細は [SETUP.md](./docs/SETUP.md) を参照してください。
 
 ### 3. データベースの初期化
 
@@ -92,8 +92,18 @@ npm run dev
 
 詳細な情報は以下のドキュメントを参照してください：
 
-- **[SETUP.md](./SETUP.md)** - 環境構築手順、開発ガイド、データベース管理、ユーザー管理、トラブルシューティング
-- **[SPEC.md](./SPEC.md)** - API仕様、データベース構造、機能仕様、使用技術
+### 開発関連
+
+- **[環境構築手順](./docs/SETUP.md)** - 環境構築手順、開発ガイド、データベース管理、ユーザー管理、トラブルシューティング
+- **[仕様書](./docs/SPEC.md)** - API仕様、データベース構造、機能仕様、使用技術
+
+### デプロイ関連
+
+- **[デプロイ手順](./DEPLOY.md)** - デプロイ手順の概要
+- **[データベース設定](./docs/deploy/database.md)** - PostgreSQLのセットアップ
+- **[環境変数設定](./docs/deploy/environment.md)** - 環境変数の設定方法
+- **[画面表示に必要なコマンド](./docs/deploy/frontend.md)** - アプリケーションの起動方法
+- **[トラブルシューティング](./docs/deploy/troubleshooting.md)** - 問題解決方法
 
 ## 📝 今後の実装予定
 
