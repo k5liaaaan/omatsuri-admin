@@ -43,7 +43,7 @@ const MunicipalityRequestList: React.FC = () => {
         return;
       }
 
-      const response = await axios.get('http://localhost:3001/api/region/municipality-requests', {
+      const response = await axios.get('/api/region/municipality-requests', {
         headers: {
           Authorization: `Bearer ${token}`
         }

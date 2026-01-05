@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 interface Prefecture {
   id: number;
   name: string;
@@ -100,7 +102,7 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
     const fetchMunicipalityPrefecture = async (municipalityId: number) => {
       try {
         console.log('市区町村から都道府県を取得中:', municipalityId);
-        const response = await fetch(`http://localhost:3001/api/region/municipalities/${municipalityId}`);
+        const response = await fetch(`${API_URL}/api/region/municipalities/${municipalityId}`);
         if (response.ok) {
           const result = await response.json();
           console.log('取得した市区町村データ:', result);
@@ -128,7 +130,7 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
       const fetchPrefectures = async () => {
         try {
           console.log('都道府県データを取得中...');
-          const response = await fetch('http://localhost:3001/api/region/prefectures');
+          const response = await fetch(`${API_URL}/api/region/prefectures`);
           console.log('都道府県APIレスポンス:', response.status);
           if (response.ok) {
             const data = await response.json();
@@ -163,7 +165,7 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
     const fetchMunicipalities = async (prefectureId: number) => {
       try {
         console.log('市区町村データを取得中...', prefectureId);
-        const response = await fetch(`http://localhost:3001/api/region/prefectures/${prefectureId}/municipalities`);
+        const response = await fetch(`${API_URL}/api/region/prefectures/${prefectureId}/municipalities`);
         console.log('市区町村APIレスポンス:', response.status);
         if (response.ok) {
           const data = await response.json();
@@ -309,8 +311,8 @@ const FestivalForm: React.FC<FestivalFormProps> = ({
         console.log('送信するデータ:', formData);
         
         const url = isEditMode 
-          ? `http://localhost:3001/api/festivals/${festivalId}`
-          : 'http://localhost:3001/api/festivals';
+          ? `${API_URL}/api/festivals/${festivalId}`
+          : `${API_URL}/api/festivals`;
         
         const method = isEditMode ? 'PUT' : 'POST';
         

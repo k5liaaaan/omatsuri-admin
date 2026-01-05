@@ -57,7 +57,7 @@ const FestivalDetail: React.FC = () => {
   const fetchFestival = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3001/api/festivals/${id}`);
+      const response = await axios.get(`/api/festivals/${id}`);
       setFestival(response.data);
     } catch (err: any) {
       console.error('お祭り詳細の取得に失敗しました:', err);
@@ -86,7 +86,7 @@ const FestivalDetail: React.FC = () => {
       setIsDeleting(true);
       const token = localStorage.getItem('token');
       
-      await axios.delete(`http://localhost:3001/api/festivals/${festival.id}`, {
+      await axios.delete(`/api/festivals/${festival.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -124,7 +124,7 @@ const FestivalDetail: React.FC = () => {
       setIsUnpublishing(true);
       const token = localStorage.getItem('token');
       
-      await axios.patch(`http://localhost:3001/api/festivals/${festival.id}/unpublish`, {}, {
+      await axios.patch(`/api/festivals/${festival.id}/unpublish`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

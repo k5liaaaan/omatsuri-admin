@@ -49,7 +49,7 @@ const FestivalEditPage: React.FC = () => {
   const fetchFestival = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3001/api/festivals/${id}`);
+      const response = await axios.get(`/api/festivals/${id}`);
       setFestival(response.data);
     } catch (err: any) {
       console.error('お祭り詳細の取得に失敗しました:', err);

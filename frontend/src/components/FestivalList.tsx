@@ -71,7 +71,7 @@ const FestivalList: React.FC = () => {
         return;
       }
 
-      const response = await axios.get(`http://localhost:3001/api/festivals?page=${page}&limit=10`, {
+      const response = await axios.get(`/api/festivals?page=${page}&limit=10`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

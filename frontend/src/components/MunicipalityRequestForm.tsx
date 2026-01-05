@@ -25,7 +25,7 @@ const MunicipalityRequestForm: React.FC = () => {
 
   const fetchPrefectures = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/region/prefectures');
+      const response = await axios.get('/api/region/prefectures');
       if (response.data.success && Array.isArray(response.data.data)) {
         setPrefectures(response.data.data);
       } else if (Array.isArray(response.data)) {
@@ -58,7 +58,7 @@ const MunicipalityRequestForm: React.FC = () => {
       const selectedPrefecture = prefectures.find(p => p.id === selectedPrefectureId);
       
       const response = await axios.post(
-        'http://localhost:3001/api/region/municipality-requests',
+        '/api/region/municipality-requests',
         {
           prefectureId: selectedPrefectureId,
           name: municipalityName.trim()
